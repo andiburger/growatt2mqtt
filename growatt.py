@@ -79,7 +79,15 @@ class Growatt:
         else:
             self.__log = logging.getLogger('growatt2mqqt_log')
             self.__log.setLevel(logging.DEBUG)
-        self.read_info()
+        try:
+            self.read_info()
+        except ModbusIOException:
+            # indication inverter is not powered on
+            i=0
+            while (i<10):
+                sleep(3600) # try after 3600s again
+                self.read_info()
+                i+=1
 
     def read_info(self):
         """ reads holding registers from Growatt inverters """
