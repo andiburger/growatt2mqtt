@@ -4,6 +4,7 @@ Python Module to implement ModBus RTU connection to Growatt Inverters
 """
 import logging
 from pymodbus.exceptions import ModbusIOException
+from time import sleep
 
 # Codes
 StateCodes = {
