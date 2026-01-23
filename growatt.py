@@ -380,11 +380,50 @@ class Growatt:
                 data.update(block3)
         else:
             self.log.warning(f"No valid register map found for model: {self.model}")
+            self.log.warning(self.get_supported_models_help)
 
         # Apply post-processing (Text mapping, bit splitting)
         if data:
             data = self._process_logic(data)
         return data
+    
+    def get_supported_models_help(self):
+        return """
+        Supported Inverter Models (Protocol Shortcodes):
+        ------------------------------------------------
+        Use these codes to select the correct register map for your device:
+
+        1. TL-XH
+            - Description: Growatt TL-XH "Battery Ready" Series (High Voltage Battery).
+            - Registers: 3000-3124 (Inverter), 3125-3249 (Battery/BDC).
+
+        2. TL3X
+            - Description: Standard TL-X / TL3-X / MIC / MIN / MAC PV-only inverters.
+            - Registers: 0-124 (Basic), 125-249 (String/PID).
+
+        3. MAX
+            - Description: Commercial MAX 1500V / MAX-X LV Series.
+            - Registers: 0-124, 125-249, 875-999 (High Power/Extra Strings).
+
+        4. TL-XH-MIN
+            - Description: MIN TL-XH (US/Global) Single Phase Hybrid.
+            - Registers: 3000-3124, 3125-3249, 3250-3374 (Extended Battery).
+
+        5. MIX
+            - Description: SPH Series / MIX (Hybrid Storage).
+            - Registers: 0-124 (Inverter), 1000-1124 (Storage/Energy Flow).
+
+        6. SPA
+            - Description: SPA Series (AC-Coupled Storage Retrofit).
+            - Registers: 1000-1124, 1125-1249, 2000-2124 (AC Grid Data).
+
+        7. SPH
+            - Description: SPH 3000-6000 Hybrid Inverters.
+            - Registers: 0-124, 1000-1124, 1125-1249 (Extended Info).
+
+        Usage Example:
+        python growatt2mqtt.py --model TL-XH
+        """
 
     def read_holding(self):
         """
