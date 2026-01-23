@@ -142,6 +142,7 @@ class Growatt2MQTT:
             protocol_version = str(
                 self.__settings.get(section, 'protocol_version'))
             measurement = self.__settings.get(section, 'measurement')
+            #growatt = Growatt(self.__client, name, unit, protocol_version, self.__log)
             growatt = Growatt(self.__client, name, unit, protocol_version, self.__log)
             growatt.print_info()
             inverters.append({
@@ -162,7 +163,7 @@ class Growatt2MQTT:
                 growatt = inverter['growatt']
                 try:
                     now = time.time()
-                    info = growatt.read()
+                    info = growatt.update()
 
                     if info is None:
                         continue
