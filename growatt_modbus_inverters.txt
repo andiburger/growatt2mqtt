@@ -1,0 +1,15 @@
+TL-X/TL-XH/TL-XH US（MIN Type）：03 register range：0~124,3000~3124，
+3125~3249(TL-XHUS) ； 04 register range ： 3000~3124,3125~3249 ，
+3250~3374（TL-XH）
+TL3-X(MAX、MID、MAC Type)：03 register range：0~124,125~249；
+04 register range：0~124,125~249 (works also for MIC)
+MAX 1500V、MAX-X LV: 03 register range：0~124,125~249；04 register
+range：0~124,125~249,875~999
+MOD TL3-XH: 03 register range：0~124,3000~3124；04 register range：
+3000~3124,3125~3249
+Storage(MIX Type)：03 register range：0~124,1000~1124；04 register
+range：0~124,1000~1124
+Storage(SPA Type)：03 register range：0~124,1000~1124；04 register
+range：1000~1124,2000~2124，1125~1249
+Storage(SPH Type)：03 register range：0~124,1000~1124；04 register
+range：0~124,1000~1124，1125~1249

@@ -3,11 +3,16 @@
 Python Module to implement ModBus RTU connection to Growatt Inverters
 """
 import logging
+from growatt_TLXH_input_reg import REG_INPUT_MAP as TLXH_REG_INPUT_MAP
+from growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_0_MAP as TL3X_REG_INPUT_MAP
 from pymodbus.exceptions import ModbusIOException
 from time import sleep
+import struct
 
 # Codes
 StateCodes = {0: "Waiting", 1: "Normal", 3: "Fault"}
+
+BatteryType = {0: "Lead-acid", 1: "Lithium battery"}
 
 ErrorCodes = {
     0: "None",
@@ -57,6 +62,95 @@ def merge(*dict_args):
     for dictionary in dict_args:
         result.update(dictionary)
     return result
+
+
+def read_from_map(row, base_index, reg_map):
+    """
+    Parses a block of Modbus registers based on a provided map.
+    
+    :param row: The response object from pymodbus (containing .registers)
+    :param base_index: The starting register address of the 'row' block (e.g., 3000)
+    :param reg_map: The dictionary defining the registers
+    :return: A dictionary with parsed values
+    """
+    results = {}
+    
+    # Check if we have registers
+    if not hasattr(row, 'registers') or not row.registers:
+        return {}
+
+    for name, (offset, length, scale, dtype) in reg_map.items():
+        # --- Read and Parse Each Register According to the Map ---
+        if offset + length > len(row.registers):
+            # Out of bounds, skip
+            continue
+
+        # extract raw data
+        regs = row.registers[offset: offset + length]
+
+        val = 0
+
+        # type-specific parsing
+        if dtype == "ascii":
+            # ASCII Decoding 
+            try:
+                # each regiser (16-bit) contains 2 characters
+                byte_data = b"".join(struct.pack(">H", r) for r in regs)
+                val = byte_data.decode("ascii").strip("\x00")  # remove padding null chars
+            except Exception:
+                val = str(regs)  # Fallback
+
+        elif dtype == "uint32":
+            # 32-Bit Unsigned (High Word First)
+            val = (regs[0] << 16) + regs[1]
+        
+        elif dtype == "int32":
+            # 32-Bit Signed (High Word First)
+            val = (regs[0] << 16) + regs[1]
+            if val > 0x7FFFFFFF:  # Negative Value Adjustment
+                val -= 0x100000000
+
+        elif dtype == "int":
+            # 16-Bit Signed
+            val = regs[0]
+            if val > 0x7FFF:
+                val -= 0x10000
+
+        else:
+            # Default: "uint" (16-Bit Unsigned)
+            val = regs[0]
+
+        if scale != 1 and isinstance(val, (int, float)):
+            val = float(val) / scale
+
+        results[name] = val
+
+    return results
+
+
+def parse_inverter_status(value):
+    """
+    Parses the 16-bit value from InverterStatus register (3000)
+    into Status (Lower 8 Bits) and Mode (Higher 8 Bits).
+    
+    :param value: The raw integer value read from register 3000
+    :return: A tuple (status, mode)
+    """
+    # Lower 8 Bits: Machine Status (e.g., 0=Standby, 1=Normal, 3=Fault)
+    # 0xFF is 11111111 in binary. The AND operation masks out the upper bits.
+    status = value & 0xFF
+    
+    # Higher 8 Bits: Run Mode (e.g., 5=PVBATOnline, 6=BatOnline)
+    # Shift right by 8 bits to move the high byte to the low position, then mask.
+    mode = (value >> 8) & 0xFF
+    
+    return status, mode
+
+    # --- Usage Example ---
+    # Assume the value read from register 3000 is 1281
+    # 1281 decimal = 0000 0101 0000 0001 binary
+    # High Byte (Mode) = 5 (PVBATOnline)
+    # Low Byte (Status) = 1 (Normal)
 
 
 class Growatt:
@@ -340,7 +434,12 @@ class Growatt:
                 ),  # inv start delay time inv start delay time
                 "bINVAllFaultCode": read_single(
                     row, 115
-                ),  # bINVAllFaultCode bINVAllFaultCode
+                ),  # bINVAllFaultCode 
+                "ACchargePower_H": read_single(row, 116),  # ACchargePower_H
+                "AC chargePower_L": read_single(row, 117),  # AC chargePower_L
+                "Priority": read_single(row, 118),  # Priority
+                "Battery Type":  BatteryType[row.registers[119]],  # Battery Type
+                "AutoProofreadCMD": read_single(row, 120),  # AutoProofreadCMD
             }
             # row = self.client.read_input_registers(125, 48, unit=self.unit)#TODO add third group
             # info = merge(info, {
@@ -557,8 +656,48 @@ class Growatt:
             # info = merge_dicts(info, self.read_fault_table('GridFault', 90, 5))
 
             return info
+        elif self.protocol_version == "TLXH":
+            self.__log.debug("Using TLXH protocol")
+            return self.read_register_TLXH()
+        elif self.protocol_version == "TL3X":
+            self.__log.debug("Using TL3X protocol")
+            return self.read_register_TL3X()
         else:
             self.__log.error("Error unknown protocol %s\n", self.protocol_version)
+    
+    def read_register_TL3X(self, count=238):
+        """
+        Reads register block starting at address 0.
+        """
+        row = self.client.read_input_registers(0, count, unit=self.unit)
+        if row.isError():
+            self.__log.error("Error reading register block 0+")
+            return None
+
+        if not TL3X_REG_INPUT_MAP:
+            self.__log.warning(
+                "REG_INPUT_MAP for TL3X inverters is empty. Fill it according to your protocol PDF."
+            )
+            return {}
+
+        return read_from_map(row, 0, TL3X_REG_INPUT_MAP)
+
+    def read_register_TLXH(self, count=232):
+        """
+        Reads register block starting at address 3000.
+        """
+        row = self.client.read_input_registers(3000, count, unit=self.unit)
+        if row.isError():
+            self.__log.error("Error reading register block 3000+")
+            return None
+
+        if not TLXH_REG_INPUT_MAP:
+            self.__log.warning(
+                "REG_INPUT_MAP for TLXH inverters is empty. Fill it according to your protocol PDF."
+            )
+            return {}
+
+        return read_from_map(row, 0, TLXH_REG_INPUT_MAP)
 
     # def read_fault_table(self, name, base_index, count):
     #     fault_table = {}
