@@ -63,6 +63,15 @@ except ImportError:
     MAP_SPH = {}
     logging.warning("Could not import growatt_storage_sph_input. Storage SPH functionality might be limited.")
 
+# 7. Smart Meter Input Registers (EASTRON, CHINT)
+try:
+    from register_maps.growatt_meter_input import REG_METER_EASTRON_MAP as MAP_EASTRON
+    from register_maps.growatt_meter_input import REG_METER_CHINT_MAP as MAP_CHINT
+except ImportError:
+    MAP_EASTRON = {}
+    MAP_CHINT = {}
+    logging.warning("Could not import growatt_meter_input. Smart Meter functionality might be limited.")
+
 # 3. Holding Registers (Settings/Info 3000+) - Optional
 
 
@@ -237,7 +246,17 @@ class Growatt:
                 val = regs[0]
                 # Handle Two's Complement
                 if val > 0x7FFF:
-                    val -= 0x10000        
+                    val -= 0x10000
+            elif dtype == "float":
+                # 32-Bit Float (2 Registers, Big Endian)
+                try:
+                    # pymodbus returns registers as list of int [HighWord, LowWord]
+                    # We pack them into binary data and unpack as float
+                    raw = struct.pack('>HH', regs[0], regs[1])
+                    val = struct.unpack('>f', raw)[0]
+                    val = round(val, 4)  # Optional: rounding
+                except Exception:
+                    val = 0.0
             else:
                 # Default "uint" (16-Bit Unsigned)
                 val = regs[0]
@@ -378,6 +397,17 @@ class Growatt:
             block3 = self._read_block(1125, 125, MAP_SPH, is_input_reg=True)
             if block3:
                 data.update(block3)
+        # --- Logic for Smart Meters EASTRON / CHINT ---
+        elif self.model == "EASTRON" and MAP_EASTRON:
+            # Block 1: Meter Data (0-49)
+            block1 = self._read_block(0, 50, MAP_EASTRON, is_input_reg=True)
+            if block1:
+                data.update(block1)
+        elif self.model == "CHINT" and MAP_CHINT:
+            # Block 1: Meter Data (0-49)
+            block1 = self._read_block(0, 50, MAP_CHINT, is_input_reg=True)
+            if block1:
+                data.update(block1)
         else:
             self.log.warning(f"No valid register map found for model: {self.model}")
             self.log.warning(self.get_supported_models_help)
@@ -386,7 +416,7 @@ class Growatt:
         if data:
             data = self._process_logic(data)
         return data
-    
+
     def get_supported_models_help(self):
         return """
         Supported Inverter Models (Protocol Shortcodes):
