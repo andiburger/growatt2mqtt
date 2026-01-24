@@ -63,6 +63,9 @@ Use one of the following shortcodes in your config file to load the correct regi
 |SPA	|AC-Coupled Storage Retrofit (e.g., SPA 3000TL BL)	|Hybrid (1000-1124), Extended (1125+), AC-Grid (2000+)|
 |MIX	|MIX / SPH Series (Alternative Layout)	|Basic (0-124), Storage/Energy Flow (1000-1124)|
 |MAX	|Commercial Inverters (MAX 1500V / MAX-X LV)	|Basic (0-124), Strings 1-16 (125-249), Strings 17-32 (875-999)|
+| MOD-XH | MOD TL3-XH Series (3-Phase Battery Ready Hybrid) | Inverter (3000-3124), Battery/BDC (3125-3249) |
+| EASTRON | Eastron SDM630 Smart Meter (Direct RS485 Connection) | Voltage/Amps (0-50), Power/Energy (52-80, 342) |
+| CHINT | Chint DTSU666 Smart Meter (Direct RS485 Connection) | Voltage/Amps (8192+), Power/Energy (8212+, 16384+) |
 
 Note: If you are unsure, start with TL3X for pure PV inverters or TL-XH for modern battery-ready systems.
 
@@ -134,3 +137,6 @@ If you receive no data or errors:
 + Verify the unit ID (default is often 1).
 
 + Set log_level = DEBUG in growatt2mqtt.cfg to see raw Modbus frames and parser outputs.
+
+## Compatibility
+Currently the code is tested for the following models: Growatt MIC 600TL-X and Growatt MOD 5000TL3-XH.

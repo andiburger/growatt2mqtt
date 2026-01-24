@@ -72,6 +72,13 @@ except ImportError:
     MAP_CHINT = {}
     logging.warning("Could not import growatt_meter_input. Smart Meter functionality might be limited.")
 
+# 8. MOD TL3-XH Input Registers
+try:
+    from register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_MAP as MAP_MOD_TL3_XH
+except ImportError:
+    MAP_MOD_TL3_XH = {}
+    logging.warning("Could not import growatt_MOD_TL3_XH_input. MOD TL3-XH functionality might be limited.")
+
 # 3. Holding Registers (Settings/Info 3000+) - Optional
 
 
@@ -408,6 +415,15 @@ class Growatt:
             block1 = self._read_block(0, 50, MAP_CHINT, is_input_reg=True)
             if block1:
                 data.update(block1)
+        # --- Logic for MOD TL3-XH Series ---
+        elif self.model == "MOD_XH" and MAP_MOD_TL3_XH:
+            # Block 1: MOD TL3-XH Data (3000-3124)
+            block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            if block2:
+                data.update(block2)
         else:
             self.log.warning(f"No valid register map found for model: {self.model}")
             self.log.warning(self.get_supported_models_help)
@@ -450,7 +466,15 @@ class Growatt:
         7. SPH
             - Description: SPH 3000-6000 Hybrid Inverters.
             - Registers: 0-124, 1000-1124, 1125-1249 (Extended Info).
-
+        8. EASTRON
+            - Description: Smart Meter - EASTRON Series.
+            - Registers: 0-49 (Meter Data).
+        9. CHINT
+            - Description: Smart Meter - CHINT Series.
+            - Registers: 0-49 (Meter Data).
+        10. MOD_XH
+            - Description: Growatt MOD TL3-XH 3-Phase Battery Ready Hybrid Inverters.
+            - Registers: 3000-3124 (Inverter), 3125-3249 (Battery/BDC).
         Usage Example:
         python growatt2mqtt.py --model TL-XH
         """
