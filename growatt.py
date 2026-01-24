@@ -79,7 +79,44 @@ except ImportError:
     MAP_MOD_TL3_XH = {}
     logging.warning("Could not import growatt_MOD_TL3_XH_input. MOD TL3-XH functionality might be limited.")
 
-# 3. Holding Registers (Settings/Info 3000+) - Optional
+# Holding Registers 
+try:
+    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP
+except ImportError:
+    REG_HOLDING_MOD_TL3_XH_MAP = {}
+    logging.warning("Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited.")
+
+try:
+    from register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP
+except ImportError:
+    REG_HOLDING_MAX_MAP = {}
+    logging.warning("Could not import growatt_MAX_holding.")
+
+try:
+    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_MAP
+except ImportError:
+    REG_HOLDING_TLXH_MIN_MAP = {}
+    logging.warning("Could not import growatt_TLXH_min_holding.")
+
+try:
+    from register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_MAP
+except ImportError:
+    REG_HOLDING_MIX_MAP = {}
+    logging.warning("Could not import growatt_storage_mix_holding.")
+
+try:
+    from register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_MAP
+except ImportError:
+    REG_HOLDING_SPA_MAP = {}
+    logging.warning("Could not import growatt_storage_spa_holding.")
+
+try:
+    from register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_MAP
+except ImportError:
+    REG_HOLDING_SPH_MAP = {}
+    logging.warning("Could not import growatt_storage_sph_holding.")
+
+
 
 
 # --- Constants & Lookups ---
@@ -179,10 +216,116 @@ class Growatt:
         self.model = model
         self.log = logging.getLogger(f"Growatt_{name}")
 
+    def read_settings(self):
+        """
+        reads the Holding Registers (settings/info, serial number, etc.).
+        This method should be called less frequently than update().
+        """
+        data = {}
+        # --- Logic for MOD TL3-XH Series ---
+        if self.model == "MOD-XH" and REG_HOLDING_MOD_TL3_XH_MAP:
+            self.log.info("Reading Holding Registers for MOD-XH...")
+            # Block 1: Basic Settings (0-124)
+            # is_input_reg=False to read holding registers (Function Code 03)
+            block1 = self._read_block(0, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Advanced Settings (3000-3124)
+            block2 = self._read_block(3000, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+        # --- Logic for MAX Series ---
+        elif self.model == "MAX" and REG_HOLDING_MAX_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (MAX)...")
+            
+            # Block 1: 0-99 (Basic settings)
+            block1 = self._read_block(0, 100, REG_HOLDING_MAX_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: 125-224 (Advanced settings)
+            block2 = self._read_block(125, 100, REG_HOLDING_MAX_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+        # --- Logic for TL-XH / MIN Series ---
+        elif (self.model == "TL-XH" or self.model == "TL-XH-MIN") and REG_HOLDING_TLXH_MIN_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (TL-XH/MIN)...")
+            
+            # Block 1: Basic (0-100)
+            block1 = self._read_block(0, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Advanced & Time (3000-3100)
+            block2 = self._read_block(3000, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+            
+            # Block 3: Extended/US (3125-3225)
+            block3 = self._read_block(3125, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            if block3:
+                data.update(block3)
+        # --- Logic for MIX (SPH/Hybrid) Series ---
+        elif self.model == "MIX" and REG_HOLDING_MIX_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (MIX)...")
+            
+            # Block 1: Basic Inverter Settings (0-100)
+            block1 = self._read_block(0, 100, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Storage & Strategy Settings (1000-1100)
+            block2 = self._read_block(1000, 100, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+
+            # Block 3: Device Info (3000-3050)
+            # Most MIX devices also support SN/Firmware in the 3000 range
+            block3 = self._read_block(3000, 50, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            if block3:
+                data.update(block3)
+        # --- Logic for SPA (AC-Coupled Storage) ---
+        elif self.model == "SPA" and REG_HOLDING_SPA_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (SPA)...")
+            
+            # Block 1: Basic Settings (0-100)
+            block1 = self._read_block(0, 100, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Storage Strategy (1000-1100)
+            block2 = self._read_block(1000, 100, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+
+            # Block 3: Device Info (3000-3050)
+            block3 = self._read_block(3000, 50, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            if block3:
+                data.update(block3)
+        # --- Logic for SPH (Hybrid Storage) ---
+        elif self.model == "SPH" and REG_HOLDING_SPH_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (SPH)...")
+            
+            # Block 1: Basic Settings (0-100)
+            block1 = self._read_block(0, 100, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Hybrid Strategy (1000-1100)
+            block2 = self._read_block(1000, 100, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+
+            # Block 3: Identification (3000-3050)
+            block3 = self._read_block(3000, 50, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            if block3:
+                data.update(block3)
+        return data
+
     def _read_block(self, start_reg, length, map_ref, is_input_reg=True):
         """
         Reads a contiguous block of registers and parses them using the provided map.
-        
         :param start_reg: Start address of the block
         :param length: Number of registers to read
         :param map_ref: The dictionary containing the register definitions
@@ -198,10 +341,8 @@ class Growatt:
             if isinstance(rr, ModbusIOException) or rr.isError():
                 self.log.error(f"Modbus Error reading block {start_reg}: {rr}")
                 return None
-            
             # Parse raw data using the register map
             return self._parse_registers(rr, start_reg, map_ref)
-
         except Exception as e:
             self.log.exception(f"Exception reading block {start_reg}: {e}")
             return None
@@ -421,6 +562,7 @@ class Growatt:
             block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block1:
                 data.update(block1)
+            # Block 2: Battery/BDC Data (3125-3249)
             block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block2:
                 data.update(block2)
