@@ -25,6 +25,10 @@ REG_HOLDING_SPH_MAP = {
 
     # 88: Modbus Address (1-247)
     "ModbusAddress": (88, 1, 1, "uint"),
+}
+
+REG_HOLDING_SPH_H_BAT_MAP = {
+    
 
     # =================================================================
     # GROUP 2: Hybrid & Battery Strategy (1000-1124)

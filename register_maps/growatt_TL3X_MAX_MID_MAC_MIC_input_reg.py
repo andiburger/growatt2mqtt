@@ -132,7 +132,9 @@ REG_INPUT_0_MAP = {
     "WarnSub": (111, 1, 1, "uint"),
     # 112: Warn Main Code
     "WarnMain": (112, 1, 1, "uint"),
+}
 
+REG_INPUT_125_MAP = {
 
     # =================================================================
     # GROUP 2: PID, String Monitor & Extended Data (Registers 125-249)

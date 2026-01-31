@@ -29,7 +29,10 @@ REG_HOLDING_TLXH_MIN_MAP = {
 
     # 88: Modbus Address (1-247)
     "ModbusAddress": (88, 1, 1, "uint"),
+}
 
+REG_HOLDING_TLXH_MIN_BAT_MAP = {
+    
     # =================================================================
     # GROUP 2: Advanced & Battery Control (3000-3124)
     # =================================================================
@@ -64,7 +67,9 @@ REG_HOLDING_TLXH_MIN_MAP = {
     # 3080: Operation Priority Mode
     # 0: Load First, 1: Battery First, 2: Grid First
     "PriorityMode": (80, 1, 1, "uint"),
+}
 
+REG_HOLDING_TLXH_US_MAP = {
     # =================================================================
     # GROUP 3: US Specific / Extended Battery (3125-3249)
     # =================================================================

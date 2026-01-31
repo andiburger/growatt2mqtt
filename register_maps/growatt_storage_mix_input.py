@@ -89,8 +89,10 @@ REG_INPUT_MIX_MAP = {
     "RealOPPercent": (101, 1, 1, "uint"),
 
     # 105: Fault Main Code
-    "FaultCode": (105, 1, 1, "uint"),
-    
+    "FaultCode": (105, 1, 1, "uint"),   
+}
+
+REG_INPUT_MIX_H_MAP = {
     
     # =================================================================
     # GROUP 2: Storage / Hybrid Data (1000-1124)

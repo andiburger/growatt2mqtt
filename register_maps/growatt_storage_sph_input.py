@@ -92,8 +92,9 @@ REG_INPUT_SPH_MAP = {
 
     # 105: Fault Main Code
     "FaultCode": (105, 1, 1, "uint"),
+}
 
-
+REG_INPUT_SPH_STORAGE_MAP = {
     # =================================================================
     # GROUP 2: Storage / Hybrid Data (1000-1124)
     # =================================================================
@@ -172,7 +173,9 @@ REG_INPUT_SPH_MAP = {
     "BMS_MaxCellVolt": (1108, 1, 1000, "uint"),
     # 1109: Min Cell Voltage - 0.001V
     "BMS_MinCellVolt": (1109, 1, 1000, "uint"),
-    
+}
+
+REG_INPUT_SPH_EXT_SYS_MAP = {    
 
     # =================================================================
     # GROUP 3: Extended System Info (1125-1249)

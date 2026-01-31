@@ -133,8 +133,9 @@ REG_INPUT_MAX_MAP = {
     "DeratingMode": (104, 1, 1, "uint"),
     "FaultCode": (105, 1, 1, "uint"),
     "WarnCode": (110, 1, 1, "uint"),
+}
 
-
+REG_INPUT_MAX_STRING_MAP = {
     # =================================================================
     # GROUP 2: String Monitor 1-16 & PID 1-8 (125-249)
     # =================================================================
@@ -172,7 +173,9 @@ REG_INPUT_MAX_MAP = {
     "Sac": (230, 2, 10, "uint32"),
     "Qac_Real": (232, 2, 10, "int32"),
     "AFCI_Status": (238, 1, 1, "uint"),
+}
 
+REG_INPUT_MAX_DATA_MAP = {
 
     # =================================================================
     # GROUP 3: Extended MAX Data (PV9-PV16, String 17-32) (875-999)

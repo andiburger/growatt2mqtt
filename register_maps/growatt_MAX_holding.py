@@ -42,6 +42,8 @@ REG_HOLDING_MAX_MAP = {
 
     # 88: Modbus Address (1-247)
     "ModbusAddress": (88, 1, 1, "uint"),
+}
+REG_HOLDING_MAX_MAP_EXTENDED = {
 
     # =================================================================
     # GROUP 2: Extended Grid & Advanced Settings (125-249)

@@ -49,7 +49,10 @@ REG_HOLDING_MOD_TL3_XH_MAP = {
 
     # 88: Modbus Address
     "ComAddress": (88, 1, 1, "uint"),
+}
 
+
+REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {
     # =================================================================
     # GROUP 2: Advanced Settings & Identification (3000-3124)
     # =================================================================

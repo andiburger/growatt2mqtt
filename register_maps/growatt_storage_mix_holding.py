@@ -25,7 +25,9 @@ REG_HOLDING_MIX_MAP = {
 
     # 88: Modbus Address (1-247)
     "ModbusAddress": (88, 1, 1, "uint"),
+}
 
+REG_HOLDING_MIX_STORAGE_MAP = {
     # =================================================================
     # GROUP 2: Storage & Time-of-Use (1000-1124)
     # =================================================================

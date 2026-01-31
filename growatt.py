@@ -8,7 +8,6 @@ Supports TL-X, TL-XH, and other series via flexible register maps.
 
 import logging
 import struct
-import time
 from pymodbus.exceptions import ModbusIOException
 
 # --- Import Register Maps ---
@@ -18,49 +17,71 @@ from pymodbus.exceptions import ModbusIOException
 # 1. TL-XH Series (Input Registers 3000-3249)
 try:
     from register_maps.growatt_TLXH_input_reg import REG_INPUT_MAP as MAP_TLXH_3000
+    from register_maps.growatt_TLXH_input_reg import REG_INPUT_BAT_MAP as MAP_TLXH_3000_BAT
 except ImportError:
     MAP_TLXH_3000 = {}
+    MAP_TLXH_3000_BAT = {}
     logging.warning("Could not import growatt_input_3000. TL-XH functionality might be limited.")
 
 # 2. Standard/Legacy Series (Input Registers 0-124, 125-249)
 try:
     from register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_0_MAP as MAP_TL3X_0
+    from register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_125_MAP as MAP_TL3X_125
 except ImportError:
     MAP_TL3X_0 = {}
+    MAP_TL3X_125 = {}
     logging.warning("Could not import growatt_input_0. Standard/Legacy functionality might be limited.")
 
 # 3. MAX 1500V / MAX-X LV Series (Input Registers 0-124, 125-249, 875-999)
 try:
     from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_MAP as MAP_MAX
+    from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_STRING_MAP as MAP_MAX_STRING
+    from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_DATA_MAP as MAP_MAX_DATA
 except ImportError:
     MAP_MAX = {}
+    MAP_MAX_STRING = {}
+    MAP_MAX_DATA = {}
     logging.warning("Could not import growatt_MAX_input. MAX series functionality might be limited.")
 
 try:
     from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_MAP as MAP_TLXH_MIN
+    from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_MAP as MAP_TLXH_MIN_BAT
+    from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_BDC_MAP as MAP_TLXH_MIN_BAT_BDC
 except ImportError:
     MAP_TLXH_MIN = {}
+    MAP_TLXH_MIN_BAT = {}
+    MAP_TLXH_MIN_BAT_BDC = {}
     logging.warning("Could not import growatt_TLXH_min_input. TL-XH MIN functionality might be limited.")
 
 # 4. Storage / Hybrid Series MIX Type (Input Registers 0-124, 1000-1124)
 try:
     from register_maps.growatt_storage_mix_input import REG_INPUT_MIX_MAP as MAP_MIX
+    from register_maps.growatt_storage_mix_input import REG_INPUT_MIX_H_MAP as MAP_MIX_H
 except ImportError:
     MAP_MIX = {}
+    MAP_MIX_H = {}
     logging.warning("Could not import growatt_storage_mix_input. Storage MIX functionality might be limited.")
 
 # 5. Storage / Hybrid Series SPA Type (Input Registers 1000-1124, 1125-1249, 2000-2124)
 try:
     from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_MAP as MAP_SPA
+    from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_EXT_BAT_MAP as MAP_SPA_EXT_BAT
+    from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_AC_GRID_MAP as MAP_SPA_AC_GRID
 except ImportError:
     MAP_SPA = {}
+    MAP_SPA_EXT_BAT = {}
+    MAP_SPA_AC_GRID = {}
     logging.warning("Could not import growatt_storage_spa_input. Storage SPA functionality might be limited.")
 
 # 6. Storage / Hybrid Series SPH Type (Input Registers 0-124, 1000-1124, 1125-1249)
 try:
     from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_MAP as MAP_SPH
+    from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_STORAGE_MAP as MAP_SPH_STORAGE
+    from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_EXT_SYS_MAP as MAP_SPH_EXT_SYS
 except ImportError:
     MAP_SPH = {}
+    MAP_SPH_STORAGE = {}
+    MAP_SPH_EXT_SYS = {}
     logging.warning("Could not import growatt_storage_sph_input. Storage SPH functionality might be limited.")
 
 # 7. Smart Meter Input Registers (EASTRON, CHINT)
@@ -84,38 +105,52 @@ except ImportError:
 # Holding Registers 
 try:
     from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP
+    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP
 except ImportError:
     REG_HOLDING_MOD_TL3_XH_MAP = {}
+    REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {}
     logging.warning("Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited.")
 
 try:
     from register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP
+    from register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP_EXTENDED
 except ImportError:
     REG_HOLDING_MAX_MAP = {}
+    REG_HOLDING_MAX_MAP_EXTENDED = {}
     logging.warning("Could not import growatt_MAX_holding.")
 
 try:
     from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_MAP
+    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_BAT_MAP
+    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_US_MAP
 except ImportError:
     REG_HOLDING_TLXH_MIN_MAP = {}
+    REG_HOLDING_TLXH_MIN_BAT_MAP = {}
+    REG_HOLDING_TLXH_US_MAP = {}
     logging.warning("Could not import growatt_TLXH_min_holding.")
 
 try:
     from register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_MAP
+    from register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_STORAGE_MAP
 except ImportError:
     REG_HOLDING_MIX_MAP = {}
+    REG_HOLDING_MIX_STORAGE_MAP = {}
     logging.warning("Could not import growatt_storage_mix_holding.")
 
 try:
     from register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_MAP
+    from register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_STRAT_CHRG_MAP
 except ImportError:
     REG_HOLDING_SPA_MAP = {}
+    REG_HOLDING_SPA_STRAT_CHRG_MAP = {}
     logging.warning("Could not import growatt_storage_spa_holding.")
 
 try:
     from register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_MAP
+    from register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_H_BAT_MAP
 except ImportError:
     REG_HOLDING_SPH_MAP = {}
+    REG_HOLDING_SPH_H_BAT_MAP = {}
     logging.warning("Could not import growatt_storage_sph_holding.")
 
 
@@ -234,7 +269,7 @@ class Growatt:
                 data.update(block1)
 
             # Block 2: Advanced Settings (3000-3124)
-            block2 = self._read_block(3000, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
+            block2 = self._read_block(3000, 100, REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP, is_input_reg=False)
             if block2:
                 data.update(block2)
         # --- Logic for MAX Series ---
@@ -247,7 +282,7 @@ class Growatt:
                 data.update(block1)
 
             # Block 2: 125-224 (Advanced settings)
-            block2 = self._read_block(125, 100, REG_HOLDING_MAX_MAP, is_input_reg=False)
+            block2 = self._read_block(125, 100, REG_HOLDING_MAX_MAP_EXTENDED, is_input_reg=False)
             if block2:
                 data.update(block2)
         # --- Logic for TL-XH / MIN Series ---
@@ -260,12 +295,12 @@ class Growatt:
                 data.update(block1)
 
             # Block 2: Advanced & Time (3000-3100)
-            block2 = self._read_block(3000, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            block2 = self._read_block(3000, 100, REG_HOLDING_TLXH_MIN_BAT_MAP, is_input_reg=False)
             if block2:
                 data.update(block2)
             
             # Block 3: Extended/US (3125-3225)
-            block3 = self._read_block(3125, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            block3 = self._read_block(3125, 100, REG_HOLDING_TLXH_US_MAP, is_input_reg=False)
             if block3:
                 data.update(block3)
         # --- Logic for MIX (SPH/Hybrid) Series ---
@@ -278,15 +313,10 @@ class Growatt:
                 data.update(block1)
 
             # Block 2: Storage & Strategy Settings (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            block2 = self._read_block(1000, 100, REG_HOLDING_MIX_STORAGE_MAP, is_input_reg=False)
             if block2:
                 data.update(block2)
 
-            # Block 3: Device Info (3000-3050)
-            # Most MIX devices also support SN/Firmware in the 3000 range
-            block3 = self._read_block(3000, 50, REG_HOLDING_MIX_MAP, is_input_reg=False)
-            if block3:
-                data.update(block3)
         # --- Logic for SPA (AC-Coupled Storage) ---
         elif self.model == "SPA" and REG_HOLDING_SPA_MAP:
             self.log.info(f"Reading Holding Registers for {self.name} (SPA)...")
@@ -297,14 +327,10 @@ class Growatt:
                 data.update(block1)
 
             # Block 2: Storage Strategy (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            block2 = self._read_block(1000, 100, REG_HOLDING_SPA_STRAT_CHRG_MAP, is_input_reg=False)
             if block2:
                 data.update(block2)
 
-            # Block 3: Device Info (3000-3050)
-            block3 = self._read_block(3000, 50, REG_HOLDING_SPA_MAP, is_input_reg=False)
-            if block3:
-                data.update(block3)
         # --- Logic for SPH (Hybrid Storage) ---
         elif self.model == "SPH" and REG_HOLDING_SPH_MAP:
             self.log.info(f"Reading Holding Registers for {self.name} (SPH)...")
@@ -315,14 +341,9 @@ class Growatt:
                 data.update(block1)
 
             # Block 2: Hybrid Strategy (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            block2 = self._read_block(1000, 100, REG_HOLDING_SPH_H_BAT_MAP, is_input_reg=False)
             if block2:
                 data.update(block2)
-
-            # Block 3: Identification (3000-3050)
-            block3 = self._read_block(3000, 50, REG_HOLDING_SPH_MAP, is_input_reg=False)
-            if block3:
-                data.update(block3)
         return data
 
     def _read_block(self, start_reg, length, map_ref, is_input_reg=True):
@@ -471,7 +492,7 @@ class Growatt:
             if self.model == "TL-XH":
                 # Block 2: Battery Data (3125-3249) -> 125 Registers
                 # Reads Battery/BMS data specifically for XH series
-                block2 = self._read_block(3125, 125, MAP_TLXH_3000, is_input_reg=True)
+                block2 = self._read_block(3125, 125, MAP_TLXH_3000_BAT, is_input_reg=True)
                 if block2:
                     data.update(block2)
         # --- Logic for TL3X / Legacy Series ---
@@ -481,7 +502,7 @@ class Growatt:
             if block1:
                 data.update(block1)
             # Block 2: String & PID Data (125-249)
-            block2 = self._read_block(125, 125, MAP_TL3X_0, is_input_reg=True)
+            block2 = self._read_block(125, 125, MAP_TL3X_125, is_input_reg=True)
             if block2:
                 data.update(block2)
         # --- Logic for MAX 1500V、MAX-X LV Series ---
@@ -491,11 +512,11 @@ class Growatt:
             if block1:
                 data.update(block1)
             # Block 2: String & PID Data (125-249)
-            block2 = self._read_block(125, 125, MAP_MAX, is_input_reg=True)
+            block2 = self._read_block(125, 125, MAP_MAX_STRING, is_input_reg=True)
             if block2:
                 data.update(block2)
             # Block 3: Extended Data (875-999)
-            block3 = self._read_block(875, 125, MAP_MAX, is_input_reg=True)
+            block3 = self._read_block(875, 125, MAP_MAX_DATA, is_input_reg=True)
             if block3:
                 data.update(block3)
         # --- Logic for TL-XH MIN Series ---
@@ -506,11 +527,11 @@ class Growatt:
                 data.update(block1)
             if self.model == "TL-XH_MIN":
                 # Block 2: Battery Data (3125-3249) -> 125 Registers
-                block2 = self._read_block(3125, 125, MAP_TLXH_MIN, is_input_reg=True)
+                block2 = self._read_block(3125, 125, MAP_TLXH_MIN_BAT, is_input_reg=True)
                 if block2:
                     data.update(block2)
                 # Block 3: Extended Battery Data (3250-3374) -> 125 Registers
-                block3 = self._read_block(3250, 125, MAP_TLXH_MIN, is_input_reg=True)
+                block3 = self._read_block(3250, 125, MAP_TLXH_MIN_BAT_BDC, is_input_reg=True)
                 if block3:
                     data.update(block3)
         # --- Logic for Storage / Hybrid MIX Series ---
@@ -520,7 +541,7 @@ class Growatt:
             if block1:
                 data.update(block1)
             # Block 2: Storage / Hybrid Data (1000-1124)
-            block2 = self._read_block(1000, 125, MAP_MIX, is_input_reg=True)
+            block2 = self._read_block(1000, 125, MAP_MIX_H, is_input_reg=True)
             if block2:
                 data.update(block2)
         # --- Logic for Storage / Hybrid SPA Series ---
@@ -530,11 +551,11 @@ class Growatt:
             if block1:
                 data.update(block1)
             # Block 2: Extended Battery Info (1125-1249)
-            block2 = self._read_block(1125, 125, MAP_SPA, is_input_reg=True)
+            block2 = self._read_block(1125, 125, MAP_SPA_EXT_BAT, is_input_reg=True)
             if block2:
                 data.update(block2)
             # Block 3: SPA Specific AC/Grid Data (2000-2124)
-            block3 = self._read_block(2000, 125, MAP_SPA, is_input_reg=True)
+            block3 = self._read_block(2000, 125, MAP_SPA_AC_GRID, is_input_reg=True)
             if block3:
                 data.update(block3)
         # --- Logic for Storage / Hybrid SPH Series ---
@@ -544,11 +565,11 @@ class Growatt:
             if block1:
                 data.update(block1)
             # Block 2: Storage / Hybrid Data (1000-1124)
-            block2 = self._read_block(1000, 125, MAP_SPH, is_input_reg=True)
+            block2 = self._read_block(1000, 125, MAP_SPH_STORAGE, is_input_reg=True)
             if block2:
                 data.update(block2)
             # Block 3: Extended Battery Info (1125-1249)
-            block3 = self._read_block(1125, 125, MAP_SPH, is_input_reg=True)
+            block3 = self._read_block(1125, 125, MAP_SPH_EXT_SYS, is_input_reg=True)
             if block3:
                 data.update(block3)
         # --- Logic for Smart Meters EASTRON / CHINT ---

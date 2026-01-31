@@ -25,7 +25,9 @@ REG_HOLDING_SPA_MAP = {
 
     # 88: Modbus Address (1-247)
     "ModbusAddress": (88, 1, 1, "uint"),
+}
 
+REG_HOLDING_SPA_STRAT_CHRG_MAP = {
     # =================================================================
     # GROUP 2: SPA Strategy & Charge Settings (1000-1124)
     # =================================================================

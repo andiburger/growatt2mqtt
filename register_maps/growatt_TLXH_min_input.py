@@ -141,120 +141,122 @@ REG_INPUT_TLXH_MIN_MAP = {
 
     # 3123-3124: System Energy Today - 0.1kWh
     "Esys_Today": (123, 2, 10, "uint32"),
+}
 
-
+REG_INPUT_TLXH_MIN_BAT_MAP = {
     # =================================================================
     # GROUP 2: Battery / BDC 1 Data (3125-3249)
     # =================================================================
 
     # 3125: BDC Status
     # 0:Wait, 1:SelfCheck, 2:Normal, 3:Fault, 4:Flash
-    "BDC1_Status": (125, 1, 1, "uint"),
+    "BDC1_Status": (0, 1, 1, "uint"),
 
     # 3126: BDC Mode
     # 0:Idle, 1:Discharge, 2:Charge
-    "BDC1_Mode": (126, 1, 1, "uint"),
+    "BDC1_Mode": (1, 1, 1, "uint"),
 
     # 3127: Battery Voltage - 0.1V
-    "Vbat": (127, 1, 10, "uint"),
+    "Vbat": (2, 1, 10, "uint"),
 
     # 3128: Battery Current - 0.1A (Signed)
-    "Ibat": (128, 1, 10, "int"),
+    "Ibat": (3, 1, 10, "int"),
 
     # 3129: SOC - 1%
-    "SOC": (129, 1, 1, "uint"),
+    "SOC": (4, 1, 1, "uint"),
 
     # 3130: SOH - 1%
-    "SOH": (130, 1, 1, "uint"),
+    "SOH": (5, 1, 1, "uint"),
 
     # 3131-3132: Battery Power - 0.1W (Signed)
     # Discharge > 0, Charge < 0
-    "Pbat": (131, 2, 10, "int32"),
+    "Pbat": (6, 2, 10, "int32"),
 
     # 3133-3134: Charge Energy Today - 0.1kWh
-    "Ebat_Charge_Today": (133, 2, 10, "uint32"),
+    "Ebat_Charge_Today": (8, 2, 10, "uint32"),
     
     # 3135-3136: Discharge Energy Today - 0.1kWh
-    "Ebat_Discharge_Today": (135, 2, 10, "uint32"),
+    "Ebat_Discharge_Today": (10, 2, 10, "uint32"),
 
     # 3137-3138: Charge Energy Total - 0.1kWh
-    "Ebat_Charge_Total": (137, 2, 10, "uint32"),
+    "Ebat_Charge_Total": (12, 2, 10, "uint32"),
     
     # 3139-3140: Discharge Energy Total - 0.1kWh
-    "Ebat_Discharge_Total": (139, 2, 10, "uint32"),
+    "Ebat_Discharge_Total": (14, 2, 10, "uint32"),
 
     # 3143: BMS Status
-    "BMS_Status": (143, 1, 1, "uint"),
+    "BMS_Status": (17, 1, 1, "uint"),
 
     # 3144: Priority Mode
     # 0:Load First, 1:Bat First, 2:Grid First
-    "PriorityMode": (144, 1, 1, "uint"),
+    "PriorityMode": (18, 1, 1, "uint"),
 
     # --- EPS (Emergency Power Supply) Data (3169+) ---
     # 3169: EPS Voltage - 0.1V
-    "Veps": (169, 1, 10, "uint"),
+    "Veps": (43, 1, 10, "uint"),
     # 3170: EPS Frequency - 0.01Hz
-    "Feps": (170, 1, 100, "uint"),
+    "Feps": (44, 1, 100, "uint"),
     # 3171-3172: EPS Power - 0.1W
-    "Peps": (171, 2, 10, "uint32"),
+    "Peps": (45, 2, 10, "uint32"),
     
     # 3200: BMS FCC (Ah)
-    "BMS_FCC": (200, 1, 1, "uint"),
+    "BMS_FCC": (73, 1, 1, "uint"),
     # 3201: BMS RM (Ah)
-    "BMS_RM": (201, 1, 1, "uint"),
+    "BMS_RM": (74, 1, 1, "uint"),
 
     # 3216: BMS Battery Voltage - 0.01V
-    "BMS_Vbat": (216, 1, 100, "uint"),
+    "BMS_Vbat": (89, 1, 100, "uint"),
     # 3217: BMS Battery Current - 0.01A
-    "BMS_Ibat": (217, 1, 100, "int"),
+    "BMS_Ibat": (90, 1, 100, "int"),
     # 3218: BMS Temperature - 0.1C
-    "BMS_Temp": (218, 1, 10, "uint"),
+    "BMS_Temp": (91, 1, 10, "uint"),
+}
 
-
+REG_INPUT_TLXH_MIN_BAT_BDC_MAP = {
     # =================================================================
     # GROUP 3: Battery / BDC 2 Data (3250-3374) (Extended)
     # =================================================================
 
     # 3250: PV Inverter 1 Output Power (High) - 0.1W
     # Note: Sometimes used for external PV inverters in AC coupling
-    "Pex1": (250, 2, 10, "uint32"),
+    "Pex1": (0, 2, 10, "uint32"),
 
     # 3254: PV Inverter 1 Energy Today - 0.1kWh
-    "Eex1_Today": (254, 2, 10, "uint32"),
+    "Eex1_Today": (4, 2, 10, "uint32"),
     # 3258: PV Inverter 1 Energy Total - 0.1kWh
-    "Eex1_Total": (258, 2, 10, "uint32"),
+    "Eex1_Total": (8, 2, 10, "uint32"),
 
     # 3262: Battery Pack Number
-    "BatPackNum": (262, 1, 1, "uint"),
+    "BatPackNum": (12, 1, 1, "uint"),
 
     # --- Second Battery Pack / BDC Data (starts around 3280+) ---
     # Be aware: Map structure for 2nd battery often mirrors the 1st
     # but offsets vary by firmware version. Common mapping:
     
     # 3280: BDC2 Charge Power - 0.1W
-    "BDC2_Pcharge": (280, 2, 10, "uint32"),
+    "BDC2_Pcharge": (30, 2, 10, "uint32"),
     
     # 3282: BDC2 Discharge Energy Total - 0.1kWh
-    "BDC2_Edischr_Total": (282, 2, 10, "uint32"),
+    "BDC2_Edischr_Total": (32, 2, 10, "uint32"),
     
     # 3284: BDC2 Charge Energy Total - 0.1kWh
-    "BDC2_Echr_Total": (284, 2, 10, "uint32"),
+    "BDC2_Echr_Total": (34, 2, 10, "uint32"),
 
     # 3288: Vbus2 - 0.1V
-    "Vbus2": (288, 1, 10, "uint"),
+    "Vbus2": (38, 1, 10, "uint"),
 
     # 3313: BMS2 Status
-    "BMS2_Status": (313, 1, 1, "uint"),
+    "BMS2_Status": (64, 1, 1, "uint"),
 
     # 3315: BMS2 SOC - 1%
-    "BMS2_SOC": (315, 1, 1, "uint"),
+    "BMS2_SOC": (65, 1, 1, "uint"),
 
     # 3316: BMS2 Voltage - 0.01V
-    "BMS2_Vbat": (316, 1, 100, "uint"),
+    "BMS2_Vbat": (66, 1, 100, "uint"),
     
     # 3317: BMS2 Current - 0.01A
-    "BMS2_Ibat": (317, 1, 100, "int"),
+    "BMS2_Ibat": (67, 1, 100, "int"),
 
     # 3322: BMS2 SOH - 1%
-    "BMS2_SOH": (322, 1, 1, "uint"),
+    "BMS2_SOH": (72, 1, 1, "uint"),
 }

@@ -42,7 +42,9 @@ REG_HOLDING_TL3X_MAP = {
 
     # 88: Modbus Address (1-247)
     "ModbusAddress": (88, 1, 1, "uint"),
+}
 
+REG_HOLDING_TL3X_ADVANCED_SETTINGS_MAP = {
     # =================================================================
     # GROUP 2: Advanced Parameters (125-249)
     # =================================================================
@@ -55,7 +57,9 @@ REG_HOLDING_TL3X_MAP = {
 
     # 232: Export Limit Power Rate (0.1% or 0.1W depending on firmware)
     "ExportLimitRate": (107, 1, 1, "uint"),
+}
 
+REG_HOLDING_TL3X_ID_MAP = {
     # =================================================================
     # GROUP 3: Identification (3000-3124)
     # =================================================================

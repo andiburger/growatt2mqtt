@@ -105,6 +105,10 @@ REG_INPUT_SPA_MAP = {
     "BMS_MaxCellVolt": (1108, 1, 1000, "uint"),
     # 1109: Min Cell Voltage - 0.001V
     "BMS_MinCellVolt": (1109, 1, 1000, "uint"),
+}
+
+REG_INPUT_SPA_EXT_BAT_MAP = {
+    
 
     # =================================================================
     # GROUP 2: Extended Battery & System Info (1125-1249)
@@ -143,7 +147,9 @@ REG_INPUT_SPA_MAP = {
     # 1211-1212: Parallel Max/Min SOC - 1%
     "MaxSOC_Parallel": (1211, 1, 1, "uint"),
     "MinSOC_Parallel": (1212, 1, 1, "uint"),
+}
 
+REG_INPUT_SPA_AC_GRID_MAP = {
 
     # =================================================================
     # GROUP 3: SPA Specific AC/Grid Data (2000-2124)
