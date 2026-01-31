@@ -203,8 +203,8 @@ class Growatt:
                 return None
             # --- NEU: DEBUG SCANNNER ---
             # Zeigt uns die rohen Zahlen im Log an, damit wir sie sortieren können
-            if start_reg == 3001:
-                self.log.error(f"!!! RAW DATA DUMP 3001: {rr.registers}")
+            #if start_reg == 3001:
+             #   self.log.error(f"!!! RAW DATA DUMP 3001: {rr.registers}")
             # ---------------------------
             return self._parse_registers(rr, start_reg, map_ref)
         except Exception as e:
@@ -232,14 +232,18 @@ class Growatt:
                     val = str(regs)
 
             elif dtype == "uint32":
-                # MOD-XH / XH SPECIAL LOGIC: Word Swap Check
-                if self.model in ["MOD-XH", "TL-XH"]:
-                    # XH Series often sends [LowWord, HighWord] (Little Endian Words)
-                    # We assume swap is needed first
+                # Standard Big Endian Berechnung (High, Low)
+                val_standard = (regs[0] << 16) + regs[1]
+                
+                # Check auf unsinnig große Werte (> 100 Mio), die auf einen nötigen Swap hindeuten
+                # oder ob es ein Energie-Zähler ist (startet meist mit 'E_')
+                if val_standard > 100000000 or (name.startswith("E_") and val_standard > 1000000):
+                    # Little Endian (Low, High)
                     val = (regs[1] << 16) + regs[0]
                 else:
-                    # Standard Big Endian
-                    val = (regs[0] << 16) + regs[1]
+                    val = val_standard
+                
+                val = float(val) / scale
 
             elif dtype == "int32":
                 # Same logic for signed 32-bit
@@ -308,11 +312,11 @@ class Growatt:
         # --- MOD-XH Logic (Fixed 3001 Offset) ---
         if self.model == "MOD-XH" and MAP_MOD_TL3_XH:
             # We use 3001 as start address because 3000 returns garbage/shift on this firmware
-            block1 = self._read_block(3001, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block1: data.update(block1)
             
             # Second block also shifted by 1
-            block2 = self._read_block(3126, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block2: data.update(block2)
 
         # --- TL-XH Logic ---
