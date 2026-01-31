@@ -360,6 +360,11 @@ class Growatt:
             return results
 
         for name, (offset, length, scale, dtype) in reg_map.items():
+            # Safety check: Is the defined register inside the read block?
+            # Note: offset in map is relative to base_index
+            if offset + length > len(row.registers):
+                self.log.error(f"Register {name} (offset {offset}, length {length}) out of range in read block.")
+                continue
             # Extract specific registers for this value
             regs = row.registers[offset: offset + length]
             val = 0
@@ -415,7 +420,6 @@ class Growatt:
                 # Default "uint" (16-Bit Unsigned)
                 val = regs[0]
             results[name] = val
-        print(results)
 
         return results
 

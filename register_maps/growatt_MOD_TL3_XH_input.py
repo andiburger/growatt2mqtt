@@ -133,52 +133,44 @@ REG_INPUT_MOD_TL3_XH_BAT_MAP = {
 
     # 3125: BDC Status
     # 0:Wait, 1:SelfCheck, 2:Normal, 3:Fault, 4:Flash
-    "BDC_Status": (125, 1, 1, "uint"),
+    "BDC_Status": (0, 1, 1, "uint"),
 
     # 3126: BDC Mode
     # 0:Idle, 1:Discharge, 2:Charge
-    "BDC_Mode": (126, 1, 1, "uint"),
+    "BDC_Mode": (1, 1, 1, "uint"),
 
     # 3127: Battery Voltage - 0.1V
-    "Vbat": (127, 1, 10, "uint"),
+    "Vbat": (2, 1, 10, "uint"),
 
     # 3128: Battery Current - 0.1A (Signed)
-    "Ibat": (128, 1, 10, "int"),
+    "Ibat": (3, 1, 10, "int"),
 
     # 3129: SOC - 1%
-    "SOC": (129, 1, 1, "uint"),
+    "SOC": (4, 1, 1, "uint"),
 
     # 3130: SOH - 1%
-    "SOH": (130, 1, 1, "uint"),
+    "SOH": (5, 1, 1, "uint"),
 
     # 3131-3132: Battery Power - 0.1W (Signed)
     # Discharge > 0, Charge < 0
-    "Pbat": (131, 2, 10, "int32"),
+    "Pbat": (6, 2, 10, "int32"),
 
     # 3133-3134: Charge Energy Today - 0.1kWh
-    "Ebat_Charge_Today": (133, 2, 10, "uint32"),
+    "Ebat_Charge_Today": (8, 2, 10, "uint32"),
     
     # 3135-3136: Discharge Energy Today - 0.1kWh
-    "Ebat_Discharge_Today": (135, 2, 10, "uint32"),
+    "Ebat_Discharge_Today": (10, 2, 10, "uint32"),
 
     # 3137-3138: Charge Energy Total - 0.1kWh
-    "Ebat_Charge_Total": (137, 2, 10, "uint32"),
+    "Ebat_Charge_Total": (12, 2, 10, "uint32"),
     
     # 3139-3140: Discharge Energy Total - 0.1kWh
-    "Ebat_Discharge_Total": (139, 2, 10, "uint32"),
+    "Ebat_Discharge_Total": (14, 2, 10, "uint32"),
 
     # 3143: BMS Status
-    "BMS_Status": (143, 1, 1, "uint"),
+    "BMS_Status": (18, 1, 1, "uint"),
 
     # 3144: Priority Mode
     # 0:Load First, 1:Bat First, 2:Grid First
-    "PriorityMode": (144, 1, 1, "uint"),
-
-    # --- EPS (Emergency Power Supply) Data ---
-    # 3169: EPS Voltage - 0.1V
-    "Veps": (169, 1, 10, "uint"),
-    # 3170: EPS Frequency - 0.01Hz
-    "Feps": (170, 1, 100, "uint"),
-    # 3171-3172: EPS Power - 0.1W
-    "Peps": (171, 2, 10, "uint32"),
+    "PriorityMode": (19, 1, 1, "uint"),
 }
