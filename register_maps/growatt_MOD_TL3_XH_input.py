@@ -137,7 +137,7 @@ REG_INPUT_MOD_TL3_XH_BAT_MAP = {
     "Vbat": (44, 1, 10, "uint"), # Teste erst 10, falls Wert 4000V -> dann 100
 
     # 3170: Battery Current (Offset 45) - 0.1A
-    "Ibat": (45, 1, 10, "uint"),
+    "Ibat": (45, 1, 10, "int"),
 
     # 3171: SOC (Offset 46) - 1%
     "SOC": (46, 1, 1, "uint"),
