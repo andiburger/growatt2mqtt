@@ -379,13 +379,10 @@ class Growatt:
                     val = str(regs)  # Fallback
 
             elif dtype == "uint32":
-                # MOD-XH uses Little-Endian Word Order: 
-                # Register 1 is High Word, Register 0 is Low Word
-                # Combined = (Reg[1] * 65536) + Reg[0]
-                val = (regs[1] << 16) + regs[0]
-                
-                # If you still see impossible millions, the firmware might be 
-                # Big-Endian. In that case, use: val = (regs[0] << 16) + regs[1]
+                # ZWINGENDER Word-Swap für dein Modell
+                # Register 1 ist High-Word, Register 0 ist Low-Word
+                val = (regs[1] << 16) + regs[0] 
+                val = float(val) / scale
 
             elif dtype == "int32":
                 # Vorzeichenbehafteter 32-Bit Wert (z.B. Ladeleistung)
@@ -566,11 +563,11 @@ class Growatt:
         # --- Logic for MOD TL3-XH Series ---
         elif self.model == "MOD-XH" and MAP_MOD_TL3_XH:
             # Block 1: MOD TL3-XH Data (3000-3124)
-            block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            block1 = self._read_block(3001, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block1:
                 data.update(block1)
             # Block 2: Battery/BDC Data (3125-3249)
-            block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            block2 = self._read_block(3126, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block2:
                 data.update(block2)
         else:
