@@ -571,6 +571,7 @@ class Growatt:
                 data.update(block1)
             # Block 2: Battery/BDC Data (3125-3249)
             block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH_BAT, is_input_reg=True)
+            print("block2 data:", block2)
             if block2:
                 data.update(block2)
         else:
