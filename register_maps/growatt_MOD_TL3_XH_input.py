@@ -126,51 +126,31 @@ REG_INPUT_MOD_TL3_XH_MAP = {
     "Esys_Today": (123, 2, 10, "uint32")
 }
 
+# === MAP 2: BATTERY (Basis 3125) ===
 REG_INPUT_MOD_TL3_XH_BAT_MAP = {
-    # =================================================================
-    # GROUP 2: Battery / BDC Data (3125-3249)
-    # =================================================================
+    # 3166: System/BDC Mode (Offset 41)
+    # High Byte: 1=Charge, 2=Discharge
+    "BDC_Mode": (41, 1, 1, "uint"),
 
-    # 3125: BDC Status
-    # 0:Wait, 1:SelfCheck, 2:Normal, 3:Fault, 4:Flash
-    "BDC_Status": (0, 1, 1, "uint"),
+    # 3169: Battery Voltage (Offset 44) - 0.01V ? PDF sagt 0.01V bei 3169
+    # (Achtung: PDF S. 78 sagt 3169 Vbat 0.01V. Falls Wert ~40000 kommt -> Scale 100)
+    "Vbat": (44, 1, 10, "uint"), # Teste erst 10, falls Wert 4000V -> dann 100
 
-    # 3126: BDC Mode
-    # 0:Idle, 1:Discharge, 2:Charge
-    "BDC_Mode": (1, 1, 1, "uint"),
+    # 3170: Battery Current (Offset 45) - 0.1A
+    "Ibat": (45, 1, 10, "uint"),
 
-    # 3127: Battery Voltage - 0.1V
-    "Vbat": (2, 1, 10, "uint"),
+    # 3171: SOC (Offset 46) - 1%
+    "SOC": (46, 1, 1, "uint"),
 
-    # 3128: Battery Current - 0.1A (Signed)
-    "Ibat": (3, 1, 10, "int"),
+    # 3178-3179: Discharge Power (Offset 53) - 0.1W
+    "Pbat_Discharge": (53, 2, 10, "uint32"),
 
-    # 3129: SOC - 1%
-    "SOC": (4, 1, 1, "uint"),
-
-    # 3130: SOH - 1%
-    "SOH": (5, 1, 1, "uint"),
-
-    # 3131-3132: Battery Power - 0.1W (Signed)
-    # Discharge > 0, Charge < 0
-    "Pbat": (6, 2, 10, "int32"),
-
-    # 3133-3134: Charge Energy Today - 0.1kWh
-    "Ebat_Charge_Today": (8, 2, 10, "uint32"),
+    # 3180-3181: Charge Power (Offset 55) - 0.1W
+    "Pbat_Charge": (55, 2, 10, "uint32"),
     
-    # 3135-3136: Discharge Energy Today - 0.1kWh
-    "Ebat_Discharge_Today": (10, 2, 10, "uint32"),
-
-    # 3137-3138: Charge Energy Total - 0.1kWh
-    "Ebat_Charge_Total": (12, 2, 10, "uint32"),
+    # 3125-3126: Discharge Energy Today (Offset 0) - Falls du das behalten willst
+    "Ebat_Discharge_Today": (0, 2, 10, "uint32"),
     
-    # 3139-3140: Discharge Energy Total - 0.1kWh
-    "Ebat_Discharge_Total": (14, 2, 10, "uint32"),
-
-    # 3143: BMS Status
-    "BMS_Status": (18, 1, 1, "uint"),
-
-    # 3144: Priority Mode
-    # 0:Load First, 1:Bat First, 2:Grid First
-    "PriorityMode": (19, 1, 1, "uint"),
+    # 3129-3130: Charge Energy Today (Offset 4)
+    "Ebat_Charge_Today": (4, 2, 10, "uint32"),
 }
