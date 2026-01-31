@@ -13,171 +13,92 @@ Covered Ranges:
 Tuple structure:
 (Offset from base index, Length in registers, Scaling factor, Type)
 """
+"""
+growatt_MOD_TL3_XH_input.py
+Corrected Map with Dummy Register shift for new Firmware.
+"""
 
 REG_INPUT_MOD_TL3_XH_MAP = {
-    # =================================================================
-    # GROUP 1: Inverter Data (3000-3124)
-    # =================================================================
-    
-    # 3000: Inverter Status
-    # Low Byte: Status (0:Wait, 1:Normal, 3:Fault), High Byte: Mode
+    # Offset 0: Status (Liest Register 3001)
     "InverterStatus": (0, 1, 1, "uint"),
 
-    # 3001-3002: PV Input Power (Total) - 0.1W
-    "PpvInput": (1, 2, 10, "uint32"),
+    # Offset 1: DUMMY / Fehlercode (Liest Register 3002)
+    # Dient nur dazu, den Shift zu korrigieren!
+    "FaultCode_Internal": (1, 1, 1, "uint"),
 
-    # --- PV1 Data ---
-    "Vpv1": (3, 1, 10, "uint"),
-    "Ipv1": (4, 1, 10, "uint"),
-    "Ppv1": (5, 2, 10, "uint32"),
-
-    # --- PV2 Data ---
-    "Vpv2": (7, 1, 10, "uint"),
-    "Ipv2": (8, 1, 10, "uint"),
-    "Ppv2": (9, 2, 10, "uint32"),
-
-    # --- PV3 Data (Usually only 2 MPPTs on MOD, but mapping exists) ---
-    "Vpv3": (11, 1, 10, "uint"),
-    "Ipv3": (12, 1, 10, "uint"),
-    "Ppv3": (13, 2, 10, "uint32"),
-
-    # --- PV4 Data ---
-    "Vpv4": (15, 1, 10, "uint"),
-    "Ipv4": (16, 1, 10, "uint"),
-    "Ppv4": (17, 2, 10, "uint32"),
-
-    # 3019-3020: System Output Power - 0.1W
-    "Psys": (19, 2, 10, "uint32"),
-
-    # 3021-3022: Reactive Power - 0.1Var
-    "Qac": (21, 2, 10, "int32"),
-
-    # 3023-3024: Output Active Power (Pac) - 0.1W
-    "Pac": (23, 2, 10, "uint32"),
-
-    # 3025: Grid Frequency - 0.01Hz
-    "Fac": (25, 1, 100, "uint"),
-
-    # --- Phase 1 (R) Data ---
-    "Vac1": (26, 1, 10, "uint"),
-    "Iac1": (27, 1, 10, "uint"),
-    "Pac1": (28, 2, 10, "uint32"),
-
-    # --- Phase 2 (S) Data ---
-    "Vac2": (30, 1, 10, "uint"),
-    "Iac2": (31, 1, 10, "uint"),
-    "Pac2": (32, 2, 10, "uint32"),
-
-    # --- Phase 3 (T) Data ---
-    "Vac3": (34, 1, 10, "uint"),
-    "Iac3": (35, 1, 10, "uint"),
-    "Pac3": (36, 2, 10, "uint32"),
-
-    # 3038-3040: Line Voltages (L-L)
-    "Vac_RS": (38, 1, 10, "uint"),
-    "Vac_ST": (39, 1, 10, "uint"),
-    "Vac_TR": (40, 1, 10, "uint"),
-
-    # 3041-3042: Energy To User Total - 0.1kWh
-    "E_ToUser_Total": (41, 2, 10, "uint32"),
+    # Ab hier sind alle Indizes um 1 verschoben (im Vergleich zum Original)
+    # PpvInput liest nun 3003+3004
+    "PpvInput": (2, 2, 10, "uint32"),
     
-    # 3043-3044: Energy To Grid Total - 0.1kWh
-    "E_ToGrid_Total": (43, 2, 10, "uint32"),
-
-    # 3045-3046: Energy Load Total - 0.1kWh
-    "E_Load_Total": (45, 2, 10, "uint32"),
-
-    # 3047-3048: Total Work Time - 0.5s
-    "WorkTimeTotal": (47, 2, 2, "uint32"),
-
-    # 3049-3050: Energy AC Today - 0.1kWh
-    "Eac_Today": (49, 2, 10, "uint32"),
-    # 3051-3052: Energy AC Total - 0.1kWh
-    "Eac_Total": (51, 2, 10, "uint32"),
-
-    # 3053-3054: PV Energy Total - 0.1kWh
-    "Epv_Total": (53, 2, 10, "uint32"),
-
-    # 3055-3056: PV1 Energy Today - 0.1kWh
-    "Epv1_Today": (55, 2, 10, "uint32"),
-    # 3057-3058: PV1 Energy Total - 0.1kWh
-    "Epv1_Total": (57, 2, 10, "uint32"),
-
-    # 3059-3062: PV2 Energy Today/Total
-    "Epv2_Today": (59, 2, 10, "uint32"),
-    "Epv2_Total": (61, 2, 10, "uint32"),
+    "Vpv1": (4, 1, 10, "uint"),
+    "Ipv1": (5, 1, 10, "uint"),
+    "Ppv1": (6, 2, 10, "uint32"),
     
-    # 3086: Derating Mode
-    "DeratingMode": (86, 1, 1, "uint"),
+    "Vpv2": (8, 1, 10, "uint"),
+    "Ipv2": (9, 1, 10, "uint"),
+    "Ppv2": (10, 2, 10, "uint32"),
     
-    # 3093: Inverter Temperature - 0.1C
-    "TempInverter": (93, 1, 10, "uint"),
-    # 3094: IPM Temperature - 0.1C
-    "TempIPM": (94, 1, 10, "uint"),
-    # 3095: Boost Temperature - 0.1C
-    "TempBoost": (95, 1, 10, "uint"),
-
-    # 3105: Fault Main Code
-    "FaultCode": (105, 1, 1, "uint"),
-    # 3106: Warning Main Code
-    "WarnCode": (106, 1, 1, "uint"),
-
-    # 3123-3124: System Energy Today - 0.1kWh
-    "Esys_Today": (123, 2, 10, "uint32"),
-
-
-    # =================================================================
-    # GROUP 2: Battery / BDC Data (3125-3249)
-    # =================================================================
-
-    # 3125: BDC Status
-    # 0:Wait, 1:SelfCheck, 2:Normal, 3:Fault, 4:Flash
-    "BDC_Status": (125, 1, 1, "uint"),
-
-    # 3126: BDC Mode
-    # 0:Idle, 1:Discharge, 2:Charge
-    "BDC_Mode": (126, 1, 1, "uint"),
-
-    # 3127: Battery Voltage - 0.1V
-    "Vbat": (127, 1, 10, "uint"),
-
-    # 3128: Battery Current - 0.1A (Signed)
-    "Ibat": (128, 1, 10, "int"),
-
-    # 3129: SOC - 1%
-    "SOC": (129, 1, 1, "uint"),
-
-    # 3130: SOH - 1%
-    "SOH": (130, 1, 1, "uint"),
-
-    # 3131-3132: Battery Power - 0.1W (Signed)
-    # Discharge > 0, Charge < 0
-    "Pbat": (131, 2, 10, "int32"),
-
-    # 3133-3134: Charge Energy Today - 0.1kWh
-    "Ebat_Charge_Today": (133, 2, 10, "uint32"),
+    "Vpv3": (12, 1, 10, "uint"),
+    "Ipv3": (13, 1, 10, "uint"),
+    "Ppv3": (14, 2, 10, "uint32"),
     
-    # 3135-3136: Discharge Energy Today - 0.1kWh
-    "Ebat_Discharge_Today": (135, 2, 10, "uint32"),
+    "Vpv4": (16, 1, 10, "uint"),
+    "Ipv4": (17, 1, 10, "uint"),
+    "Ppv4": (18, 2, 10, "uint32"),
 
-    # 3137-3138: Charge Energy Total - 0.1kWh
-    "Ebat_Charge_Total": (137, 2, 10, "uint32"),
+    # System Power
+    "Psys": (20, 2, 10, "uint32"),
+    "Qac": (22, 2, 10, "uint32"), # Blindleistung?
     
-    # 3139-3140: Discharge Energy Total - 0.1kWh
-    "Ebat_Discharge_Total": (139, 2, 10, "uint32"),
-
-    # 3143: BMS Status
-    "BMS_Status": (143, 1, 1, "uint"),
-
-    # 3144: Priority Mode
-    # 0:Load First, 1:Bat First, 2:Grid First
-    "PriorityMode": (144, 1, 1, "uint"),
-
-    # --- EPS (Emergency Power Supply) Data ---
-    # 3169: EPS Voltage - 0.1V
-    "Veps": (169, 1, 10, "uint"),
-    # 3170: EPS Frequency - 0.01Hz
-    "Feps": (170, 1, 100, "uint"),
-    # 3171-3172: EPS Power - 0.1W
-    "Peps": (171, 2, 10, "uint32"),
+    # AC Output
+    "Pac": (24, 2, 10, "uint32"),
+    "Fac": (26, 1, 100, "uint"),
+    
+    "Vac1": (27, 1, 10, "uint"),
+    "Iac1": (28, 1, 10, "uint"),
+    "Pac1": (29, 2, 10, "uint32"),
+    
+    "Vac2": (31, 1, 10, "uint"),
+    "Iac2": (32, 1, 10, "uint"),
+    "Pac2": (33, 2, 10, "uint32"),
+    
+    "Vac3": (35, 1, 10, "uint"),
+    "Iac3": (36, 1, 10, "uint"),
+    "Pac3": (37, 2, 10, "uint32"),
+    
+    # Grid Info (Hier war vorher Vac_RS oft verschoben)
+    "Vac_RS": (39, 1, 10, "uint"),
+    "Vac_ST": (40, 1, 10, "uint"),
+    "Vac_TR": (41, 1, 10, "uint"), # Frequenz? Oder Spannung T-R?
+    
+    # Energy Data
+    "E_ToUser_Total": (42, 2, 10, "uint32"),
+    "E_ToGrid_Total": (44, 2, 10, "uint32"),
+    "E_Load_Total": (46, 2, 10, "uint32"),
+    
+    "WorkTimeTotal": (48, 2, 10, "uint32"), # High count
+    "Eac_Today": (50, 2, 10, "uint32"),
+    "Eac_Total": (52, 2, 10, "uint32"),
+    
+    "Epv_Total": (54, 2, 10, "uint32"),
+    "Epv1_Today": (56, 2, 10, "uint32"),
+    "Epv1_Total": (58, 2, 10, "uint32"),
+    
+    "Epv2_Today": (60, 2, 10, "uint32"),
+    "Epv2_Total": (62, 2, 10, "uint32"),
+    
+    "Epv3_Today": (64, 2, 10, "uint32"),
+    "Epv3_Total": (66, 2, 10, "uint32"),
+    
+    "Epv4_Today": (68, 2, 10, "uint32"),
+    "Epv4_Total": (70, 2, 10, "uint32"),
+    
+    # Status Codes (Verschoben von ~88 auf ~89/90)
+    "DeratingMode": (89, 1, 1, "uint"),
+    "TempInverter": (90, 1, 10, "uint"),
+    "TempIPM": (91, 1, 10, "uint"),
+    "TempBoost": (92, 1, 10, "uint"),
+    
+    "FaultCode": (102, 1, 1, "uint"), # Prüfen ob das passt, sonst Dummy
+    "WarnCode": (103, 1, 1, "uint"),
 }
