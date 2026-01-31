@@ -1,9 +1,19 @@
 REG_INPUT_MOD_TL3_XH_MAP = {
+    # 3000: Status (Index 0)
     "InverterStatus": (0, 1, 1, "uint"),
+    
+    # 3001-3002: PV Leistung (Index 1, Länge 2)
     "PpvInput": (1, 2, 10, "uint32"),
+    
+    # 3003: Spannung (Index 3)
     "Vpv1": (3, 1, 10, "uint"),
+    
+    # 3004: Strom (Index 4)
     "Ipv1": (4, 1, 10, "uint"),
+    
+    # 3005-3006: PV1 Leistung (Index 5, Länge 2)
     "Ppv1": (5, 2, 10, "uint32"),
+    
     "Vpv2": (7, 1, 10, "uint"),
     "Ipv2": (8, 1, 10, "uint"),
     "Ppv2": (9, 2, 10, "uint32"),
