@@ -391,6 +391,7 @@ class Growatt:
                 val = regs[0]
                 if scale == 1:
                     val = int(val)
+                    print(val)
                 else:
                     val = float(val) / scale
 
