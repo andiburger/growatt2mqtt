@@ -580,9 +580,9 @@ class Growatt:
             if block1:
                 data.update(block1)
             # Block 2: Battery/BDC Data (3125-3249)
-            block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH, is_input_reg=True)
-            if block2:
-                data.update(block2)
+            #block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            #if block2:
+            #    data.update(block2)
         else:
             self.log.warning(f"No valid register map found for model: {self.model}")
             self.log.warning(self.get_supported_models_help)
