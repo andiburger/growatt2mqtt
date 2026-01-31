@@ -227,12 +227,12 @@ class Growatt:
             self.log.info("Reading Holding Registers for MOD-XH...")
             # Block 1: Basic Settings (0-124)
             # is_input_reg=False to read holding registers (Function Code 03)
-            block1 = self._read_block(0, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
+            block1 = self._read_block(0, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False, map_base=0)
             if block1:
                 data.update(block1)
 
             # Block 2: Advanced Settings (3000-3124)
-            block2 = self._read_block(3000, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
+            block2 = self._read_block(3000, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False, map_base=3000)
             if block2:
                 data.update(block2)
         # --- Logic for MAX Series ---
@@ -240,12 +240,12 @@ class Growatt:
             self.log.info(f"Reading Holding Registers for {self.name} (MAX)...")
             
             # Block 1: 0-99 (Basic settings)
-            block1 = self._read_block(0, 100, REG_HOLDING_MAX_MAP, is_input_reg=False)
+            block1 = self._read_block(0, 100, REG_HOLDING_MAX_MAP, is_input_reg=False, map_base=0)
             if block1:
                 data.update(block1)
 
             # Block 2: 125-224 (Advanced settings)
-            block2 = self._read_block(125, 100, REG_HOLDING_MAX_MAP, is_input_reg=False)
+            block2 = self._read_block(125, 100, REG_HOLDING_MAX_MAP, is_input_reg=False, map_base=0)
             if block2:
                 data.update(block2)
         # --- Logic for TL-XH / MIN Series ---
@@ -253,17 +253,17 @@ class Growatt:
             self.log.info(f"Reading Holding Registers for {self.name} (TL-XH/MIN)...")
             
             # Block 1: Basic (0-100)
-            block1 = self._read_block(0, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            block1 = self._read_block(0, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False, map_base=0)
             if block1:
                 data.update(block1)
 
             # Block 2: Advanced & Time (3000-3100)
-            block2 = self._read_block(3000, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            block2 = self._read_block(3000, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False, map_base=3000)
             if block2:
                 data.update(block2)
             
             # Block 3: Extended/US (3125-3225)
-            block3 = self._read_block(3125, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            block3 = self._read_block(3125, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False, map_base=3000)
             if block3:
                 data.update(block3)
         # --- Logic for MIX (SPH/Hybrid) Series ---
@@ -271,18 +271,18 @@ class Growatt:
             self.log.info(f"Reading Holding Registers for {self.name} (MIX)...")
             
             # Block 1: Basic Inverter Settings (0-100)
-            block1 = self._read_block(0, 100, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            block1 = self._read_block(0, 100, REG_HOLDING_MIX_MAP, is_input_reg=False, map_base=0)
             if block1:
                 data.update(block1)
 
             # Block 2: Storage & Strategy Settings (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            block2 = self._read_block(1000, 100, REG_HOLDING_MIX_MAP, is_input_reg=False, map_base=1000)
             if block2:
                 data.update(block2)
 
             # Block 3: Device Info (3000-3050)
             # Most MIX devices also support SN/Firmware in the 3000 range
-            block3 = self._read_block(3000, 50, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            block3 = self._read_block(3000, 50, REG_HOLDING_MIX_MAP, is_input_reg=False, map_base=3000)
             if block3:
                 data.update(block3)
         # --- Logic for SPA (AC-Coupled Storage) ---
@@ -290,17 +290,17 @@ class Growatt:
             self.log.info(f"Reading Holding Registers for {self.name} (SPA)...")
             
             # Block 1: Basic Settings (0-100)
-            block1 = self._read_block(0, 100, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            block1 = self._read_block(0, 100, REG_HOLDING_SPA_MAP, is_input_reg=False,map_base=0)
             if block1:
                 data.update(block1)
 
             # Block 2: Storage Strategy (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            block2 = self._read_block(1000, 100, REG_HOLDING_SPA_MAP, is_input_reg=False, map_base=1000)
             if block2:
                 data.update(block2)
 
             # Block 3: Device Info (3000-3050)
-            block3 = self._read_block(3000, 50, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            block3 = self._read_block(3000, 50, REG_HOLDING_SPA_MAP, is_input_reg=False, map_base=3000)
             if block3:
                 data.update(block3)
         # --- Logic for SPH (Hybrid Storage) ---
@@ -308,28 +308,29 @@ class Growatt:
             self.log.info(f"Reading Holding Registers for {self.name} (SPH)...")
             
             # Block 1: Basic Settings (0-100)
-            block1 = self._read_block(0, 100, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            block1 = self._read_block(0, 100, REG_HOLDING_SPH_MAP, is_input_reg=False, map_base=0)
             if block1:
                 data.update(block1)
 
             # Block 2: Hybrid Strategy (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            block2 = self._read_block(1000, 100, REG_HOLDING_SPH_MAP, is_input_reg=False, map_base=1000)
             if block2:
                 data.update(block2)
 
             # Block 3: Identification (3000-3050)
-            block3 = self._read_block(3000, 50, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            block3 = self._read_block(3000, 50, REG_HOLDING_SPH_MAP, is_input_reg=False, map_base=3000)
             if block3:
                 data.update(block3)
         return data
 
-    def _read_block(self, start_reg, length, map_ref, is_input_reg=True):
+    def _read_block(self, start_reg, length, map_ref, is_input_reg=True, map_base=0):
         """
         Reads a contiguous block of registers and parses them using the provided map.
         :param start_reg: Start address of the block
         :param length: Number of registers to read
         :param map_ref: The dictionary containing the register definitions
         :param is_input_reg: True for Input Registers (04), False for Holding Registers (03)
+        :param map_base: Base index for the map (usually 0 or 3000)
         :return: Dictionary of parsed data or None on error
         """
         try:
@@ -339,15 +340,15 @@ class Growatt:
                 rr = self.client.read_holding_registers(start_reg, length, unit=self.unit)
 
             if isinstance(rr, ModbusIOException) or rr.isError():
-                self.log.error(f"Modbus Error reading block {start_reg}: {rr}")
                 return None
+            
             # Parse raw data using the register map
-            return self._parse_registers(rr, start_reg, map_ref)
+            return self._parse_registers(rr, start_reg, map_ref, map_base)
         except Exception as e:
-            self.log.exception(f"Exception reading block {start_reg}: {e}")
+            self.log.exception(f"Error reading block {start_reg}: {e}")
             return None
 
-    def _parse_registers(self, row, base_index, reg_map):
+    def _parse_registers(self, row, base_index, reg_map, map_base):
         """
         Generic Parser: Converts raw register data into readable values based on the map.
         Handles data types (uint, int, uint32, ascii) and scaling.
@@ -358,13 +359,23 @@ class Growatt:
         if not hasattr(row, 'registers') or not row.registers:
             return results
 
+        # Determine the block end for safety checks
+        block_end = base_index + len(row.registers)
+
         for name, (offset, length, scale, dtype) in reg_map.items():
             # Safety check: Is the defined register inside the read block?
             # Note: offset in map is relative to base_index
             if offset + length > len(row.registers):
                 continue
+            global_reg_addr = map_base + offset
+            if not (base_index <= global_reg_addr < block_end):
+                continue
+            
+            if global_reg_addr + length > block_end:
+                continue
+            local_index = global_reg_addr - base_index
             # Extract specific registers for this value
-            regs = row.registers[offset: offset + length]
+            regs = row.registers[local_index: local_index + length]
             val = 0
             # --- Type Conversion ---
             if dtype == "ascii":
@@ -464,13 +475,13 @@ class Growatt:
         # --- Logic for TL-XH Series (Battery Ready) ---
         if (self.model == "TL-XH" or self.model == "TL_X") and MAP_TLXH_3000:
             # Block 1: Inverter Data (3000-3124) -> 125 Registers
-            block1 = self._read_block(3000, 125, MAP_TLXH_3000, is_input_reg=True)
+            block1 = self._read_block(3000, 125, MAP_TLXH_3000, is_input_reg=True,map_base=3000)
             if block1:
                 data.update(block1)
             if self.model == "TL-XH":
                 # Block 2: Battery Data (3125-3249) -> 125 Registers
                 # Reads Battery/BMS data specifically for XH series
-                block2 = self._read_block(3125, 125, MAP_TLXH_3000, is_input_reg=True)
+                block2 = self._read_block(3125, 125, MAP_TLXH_3000, is_input_reg=True, map_base=3000)
                 if block2:
                     data.update(block2)
         # --- Logic for TL3X / Legacy Series ---
