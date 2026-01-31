@@ -557,7 +557,7 @@ class Growatt:
             if block1:
                 data.update(block1)
         # --- Logic for MOD TL3-XH Series ---
-        elif self.model == "MOD_XH" and MAP_MOD_TL3_XH:
+        elif self.model == "MOD-XH" and MAP_MOD_TL3_XH:
             # Block 1: MOD TL3-XH Data (3000-3124)
             block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block1:
@@ -614,7 +614,7 @@ class Growatt:
         9. CHINT
             - Description: Smart Meter - CHINT Series.
             - Registers: 0-49 (Meter Data).
-        10. MOD_XH
+        10. MOD-XH
             - Description: Growatt MOD TL3-XH 3-Phase Battery Ready Hybrid Inverters.
             - Registers: 3000-3124 (Inverter), 3125-3249 (Battery/BDC).
         Usage Example:
