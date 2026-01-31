@@ -363,7 +363,7 @@ class Growatt:
             # Note: offset in map is relative to base_index
             if offset + length > len(row.registers):
                 continue
-
+            print(row.registers)
             # Extract specific registers for this value
             regs = row.registers[offset: offset + length]
             val = 0
