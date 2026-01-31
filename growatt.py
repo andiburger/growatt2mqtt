@@ -366,9 +366,6 @@ class Growatt:
             # Extract specific registers for this value
             regs = row.registers[offset: offset + length]
             val = 0
-            print(name)
-            print(regs)
-            print(regs[0])
             # --- Type Conversion ---
             if dtype == "ascii":
                 try:
@@ -446,8 +443,6 @@ class Growatt:
             raw = int(data["InverterStatus"])
             status = raw & 0xFF
             mode = (raw >> 8) & 0xFF
-            print("status:", status)
-            print("mode:", mode)
             
             data["StatusVal"] = INVERTER_WEB_PAGE_STATUS[status]
             data["StatusMode"] = INVERTER_RUN_STATES[mode]
