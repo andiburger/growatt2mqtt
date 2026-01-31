@@ -204,7 +204,7 @@ class Growatt:
             # --- NEU: DEBUG SCANNNER ---
             # Zeigt uns die rohen Zahlen im Log an, damit wir sie sortieren können
             if start_reg == 3000:
-                self.log.error(f"!!! RAW DATA DUMP 3001: {rr.registers}")
+                self.log.error(f"!!! RAW DATA DUMP 3000: {rr.registers}")
             # ---------------------------
             return self._parse_registers(rr, start_reg, map_ref)
         except Exception as e:
