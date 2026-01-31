@@ -73,7 +73,7 @@ class GrowattService:
             stopbits=1,
             parity='N',
             bytesize=8,
-            timeout=1
+            timeout=3
         )
         if not self.client_modbus.connect():
             self.log.error("Failed to connect to Modbus interface!")

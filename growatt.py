@@ -379,16 +379,27 @@ class Growatt:
                     val = str(regs)  # Fallback
 
             elif dtype == "uint32":
-                # 32-Bit Unsigned (High Word First / Big Endian)
-                val = (regs[0] << 16) + regs[1]
+                # Wir berechnen beide Varianten
+                val_standard = (regs[0] << 16) + regs[1]
+                val_swapped = (regs[1] << 16) + regs[0]
+                
+                # Plausibilitäts-Check für Growatt XH-Serie:
+                # Wenn der Standard-Wert astronomisch hoch ist (> 500.000), 
+                # ist es fast immer ein Word-Swap Fehler.
+                if val_standard > 500000:
+                    val = val_swapped
+                else:
+                    val = val_standard
 
             elif dtype == "int32":
-                # 32-Bit Signed (High Word First)
-                val = (regs[0] << 16) + regs[1]
-                # Handle Two's Complement for negative values
-                if val > 0x7FFFFFFF:
-                    val -= 0x100000000
-
+                # Vorzeichenbehafteter 32-Bit Wert (z.B. Ladeleistung)
+                combined = (regs[0] << 16) + regs[1]
+                if combined > 500000: # Auch hier Check auf Swap
+                    combined = (regs[1] << 16) + regs[0]
+                
+                if combined & 0x80000000:
+                    combined -= 0x100000000
+                val = combined
             elif dtype == "int":
                 # 16-Bit Signed
                 val = regs[0]
@@ -559,11 +570,11 @@ class Growatt:
         # --- Logic for MOD TL3-XH Series ---
         elif self.model == "MOD-XH" and MAP_MOD_TL3_XH:
             # Block 1: MOD TL3-XH Data (3000-3124)
-            block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            block1 = self._read_block(3001, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block1:
                 data.update(block1)
             # Block 2: Battery/BDC Data (3125-3249)
-            block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            block2 = self._read_block(3126, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block2:
                 data.update(block2)
         else:
