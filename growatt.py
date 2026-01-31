@@ -1,15 +1,203 @@
 #!/usr/bin/env python3
 """
-Python Module to implement ModBus RTU connection to Growatt Inverters
+growatt.py
+
+Refactored module for Modbus RTU communication with Growatt Inverters.
+Supports TL-X, TL-XH, and other series via flexible register maps.
 """
+
 import logging
+import struct
 from pymodbus.exceptions import ModbusIOException
-from time import sleep
 
-# Codes
-StateCodes = {0: "Waiting", 1: "Normal", 3: "Fault"}
+# --- Import Register Maps ---
+# Ensure these files are located in the same directory.
+# We use try-except to prevent crashes if a map file is missing.
 
-ErrorCodes = {
+# 1. TL-XH Series (Input Registers 3000-3249)
+try:
+    from register_maps.growatt_TLXH_input_reg import REG_INPUT_MAP as MAP_TLXH_3000
+    from register_maps.growatt_TLXH_input_reg import REG_INPUT_BAT_MAP as MAP_TLXH_3000_BAT
+except ImportError:
+    MAP_TLXH_3000 = {}
+    MAP_TLXH_3000_BAT = {}
+    logging.warning("Could not import growatt_input_3000. TL-XH functionality might be limited.")
+
+# 2. Standard/Legacy Series (Input Registers 0-124, 125-249)
+try:
+    from register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_0_MAP as MAP_TL3X_0
+    from register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_125_MAP as MAP_TL3X_125
+except ImportError:
+    MAP_TL3X_0 = {}
+    MAP_TL3X_125 = {}
+    logging.warning("Could not import growatt_input_0. Standard/Legacy functionality might be limited.")
+
+# 3. MAX 1500V / MAX-X LV Series (Input Registers 0-124, 125-249, 875-999)
+try:
+    from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_MAP as MAP_MAX
+    from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_STRING_MAP as MAP_MAX_STRING
+    from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_DATA_MAP as MAP_MAX_DATA
+except ImportError:
+    MAP_MAX = {}
+    MAP_MAX_STRING = {}
+    MAP_MAX_DATA = {}
+    logging.warning("Could not import growatt_MAX_input. MAX series functionality might be limited.")
+
+try:
+    from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_MAP as MAP_TLXH_MIN
+    from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_MAP as MAP_TLXH_MIN_BAT
+    from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_BDC_MAP as MAP_TLXH_MIN_BAT_BDC
+except ImportError:
+    MAP_TLXH_MIN = {}
+    MAP_TLXH_MIN_BAT = {}
+    MAP_TLXH_MIN_BAT_BDC = {}
+    logging.warning("Could not import growatt_TLXH_min_input. TL-XH MIN functionality might be limited.")
+
+# 4. Storage / Hybrid Series MIX Type (Input Registers 0-124, 1000-1124)
+try:
+    from register_maps.growatt_storage_mix_input import REG_INPUT_MIX_MAP as MAP_MIX
+    from register_maps.growatt_storage_mix_input import REG_INPUT_MIX_H_MAP as MAP_MIX_H
+except ImportError:
+    MAP_MIX = {}
+    MAP_MIX_H = {}
+    logging.warning("Could not import growatt_storage_mix_input. Storage MIX functionality might be limited.")
+
+# 5. Storage / Hybrid Series SPA Type (Input Registers 1000-1124, 1125-1249, 2000-2124)
+try:
+    from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_MAP as MAP_SPA
+    from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_EXT_BAT_MAP as MAP_SPA_EXT_BAT
+    from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_AC_GRID_MAP as MAP_SPA_AC_GRID
+except ImportError:
+    MAP_SPA = {}
+    MAP_SPA_EXT_BAT = {}
+    MAP_SPA_AC_GRID = {}
+    logging.warning("Could not import growatt_storage_spa_input. Storage SPA functionality might be limited.")
+
+# 6. Storage / Hybrid Series SPH Type (Input Registers 0-124, 1000-1124, 1125-1249)
+try:
+    from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_MAP as MAP_SPH
+    from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_STORAGE_MAP as MAP_SPH_STORAGE
+    from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_EXT_SYS_MAP as MAP_SPH_EXT_SYS
+except ImportError:
+    MAP_SPH = {}
+    MAP_SPH_STORAGE = {}
+    MAP_SPH_EXT_SYS = {}
+    logging.warning("Could not import growatt_storage_sph_input. Storage SPH functionality might be limited.")
+
+# 7. Smart Meter Input Registers (EASTRON, CHINT)
+try:
+    from register_maps.growatt_meter_input import REG_METER_EASTRON_MAP as MAP_EASTRON
+    from register_maps.growatt_meter_input import REG_METER_CHINT_MAP as MAP_CHINT
+except ImportError:
+    MAP_EASTRON = {}
+    MAP_CHINT = {}
+    logging.warning("Could not import growatt_meter_input. Smart Meter functionality might be limited.")
+
+# 8. MOD TL3-XH Input Registers
+try:
+    from register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_MAP as MAP_MOD_TL3_XH
+    from register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_BAT_MAP as MAP_MOD_TL3_XH_BAT
+except ImportError:
+    MAP_MOD_TL3_XH = {}
+    MAP_MOD_TL3_XH_BAT = {}
+    logging.warning("Could not import growatt_MOD_TL3_XH_input. MOD TL3-XH functionality might be limited.")
+
+# Holding Registers 
+try:
+    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP
+    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP
+except ImportError:
+    REG_HOLDING_MOD_TL3_XH_MAP = {}
+    REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {}
+    logging.warning("Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited.")
+
+try:
+    from register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP
+    from register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP_EXTENDED
+except ImportError:
+    REG_HOLDING_MAX_MAP = {}
+    REG_HOLDING_MAX_MAP_EXTENDED = {}
+    logging.warning("Could not import growatt_MAX_holding.")
+
+try:
+    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_MAP
+    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_BAT_MAP
+    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_US_MAP
+except ImportError:
+    REG_HOLDING_TLXH_MIN_MAP = {}
+    REG_HOLDING_TLXH_MIN_BAT_MAP = {}
+    REG_HOLDING_TLXH_US_MAP = {}
+    logging.warning("Could not import growatt_TLXH_min_holding.")
+
+try:
+    from register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_MAP
+    from register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_STORAGE_MAP
+except ImportError:
+    REG_HOLDING_MIX_MAP = {}
+    REG_HOLDING_MIX_STORAGE_MAP = {}
+    logging.warning("Could not import growatt_storage_mix_holding.")
+
+try:
+    from register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_MAP
+    from register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_STRAT_CHRG_MAP
+except ImportError:
+    REG_HOLDING_SPA_MAP = {}
+    REG_HOLDING_SPA_STRAT_CHRG_MAP = {}
+    logging.warning("Could not import growatt_storage_spa_holding.")
+
+try:
+    from register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_MAP
+    from register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_H_BAT_MAP
+except ImportError:
+    REG_HOLDING_SPH_MAP = {}
+    REG_HOLDING_SPH_H_BAT_MAP = {}
+    logging.warning("Could not import growatt_storage_sph_holding.")
+
+
+
+
+# --- Constants & Lookups ---
+
+STATE_CODES = {
+    0: "Waiting", 
+    1: "Normal", 
+    3: "Fault",
+    4: "Flash"
+}
+
+INVERTER_RUN_STATES = {
+    0: "Waiting module",
+    1: "Self-test mode",
+    2: "Reserved",
+    3: "SysFault module",
+    4: "Flash module",
+    5: "PVBATOnline module",
+    6: "BatOnline module",
+    7: "PVOfflineMode",
+    8: "BatOfflineMode",
+}
+
+INVERTER_WEB_PAGE_STATUS = {
+    0: "StandbyStatus",
+    1: "NormalStatus",
+    3: "FaultStatus",
+    4: "FlashStatus",
+}
+
+DERATING_MODE = {
+    0: "No Derating",
+    1: "PV",
+    2: "Temperature",
+    3: "Vac",
+    4: "Fac",
+    5: "Tboost",
+    6: "Tinv",
+    7: "Control",
+    8: "*LoadSpeed",
+    9: "*OverBackByTime",
+}
+
+ERROR_CODES = {
     0: "None",
     24: "Auto Test Failed",
     25: "No AC Connection",
@@ -20,588 +208,449 @@ ErrorCodes = {
     30: "AC Voltage Outrange",
     31: "AC Freq Outrange",
     32: "Module Hot",
+    # Add more specific error codes here if needed
 }
 
+# Fallback for generic error codes (e.g., Error 100)
 for i in range(1, 24):
-    ErrorCodes[i] = "Error Code: %s" % str(99 + i)
-
-DeratingMode = {
-    0: "No Deratring",
-    1: "PV",
-    2: "",
-    3: "Vac",
-    4: "Fac",
-    5: "Tboost",
-    6: "Tinv",
-    7: "Control",
-    8: "*LoadSpeed",
-    9: "*OverBackByTime",
-}
-
-PIDStatus = {1: "Wait Status", 2: "Normal Status", 3: "Fault Status"}
+    if i not in ERROR_CODES:
+        ERROR_CODES[i] = f"Error Code: {99 + i}"
 
 
-def read_single(row, index, unit=10):
-    """reads a value from 1 ModBus register"""
-    return float(row.registers[index]) / unit
-
-
-def read_double(row, index, unit=10):
-    """reads values consists of 2 ModBus register"""
-    return float((row.registers[index] << 16) + row.registers[index + 1]) / unit
-
-
-def merge(*dict_args):
-    """merges dictionaries"""
-    result = {}
-    for dictionary in dict_args:
-        result.update(dictionary)
-    return result
+def parse_inverter_status(value):
+    """
+    Parses the 16-bit value from InverterStatus register (3000)
+    into Status (Lower 8 Bits) and Mode (Higher 8 Bits).
+    :param value: The raw integer value read from register 3000
+    :return: A tuple (status, mode)
+    """
+    # Lower 8 Bits: Machine Status (e.g., 0=Standby, 1=Normal, 3=Fault)
+    # 0xFF is 11111111 in binary. The AND operation masks out the upper bits.
+    status = value & 0xFF
+    # Higher 8 Bits: Run Mode (e.g., 5=PVBATOnline, 6=BatOnline)
+    # Shift right by 8 bits to move the high byte to the low position, then mask.
+    mode = (value >> 8) & 0xFF
+    return status, mode
 
 
 class Growatt:
-    """Class Growatt implements ModBus RTU protocol for growatt inverters"""
+    """
+    Main class to control and read data from Growatt Inverters via Modbus RTU.
+    """
 
-    def __init__(self, client, name, unit, protocol_version, log=None):
+    def __init__(self, client, name, unit, model, log=None):
+        """
+        Initialize the inverter object.
+        
+        :param client: Pymodbus Serial Client object (must be connected)
+        :param name: Name of the inverter (for logging)
+        :param unit: Modbus Unit ID (Slave Address)
+        :param model: Model variant, e.g., "TL-XH" or "TL3X"
+        """
         self.client = client
         self.name = name
         self.unit = unit
-        self.protocol_version = protocol_version
-        if log is not None:
-            self.__log = log
-        else:
-            self.__log = logging.getLogger("growatt2mqtt_log")
-            self.__log.setLevel(logging.DEBUG)
-            if not self.__log.handlers:
-                ch = logging.StreamHandler()
-                ch.setFormatter(
-                    logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-                )
-                self.__log.addHandler(ch)
+        self.model = model
+        self.log = logging.getLogger(f"Growatt_{name}")
+
+    def read_settings(self):
+        """
+        reads the Holding Registers (settings/info, serial number, etc.).
+        This method should be called less frequently than update().
+        """
+        data = {}
+        # --- Logic for MOD TL3-XH Series ---
+        if self.model == "MOD-XH" and REG_HOLDING_MOD_TL3_XH_MAP:
+            self.log.info("Reading Holding Registers for MOD-XH...")
+            # Block 1: Basic Settings (0-124)
+            # is_input_reg=False to read holding registers (Function Code 03)
+            block1 = self._read_block(0, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Advanced Settings (3000-3124)
+            block2 = self._read_block(3000, 100, REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+        # --- Logic for MAX Series ---
+        elif self.model == "MAX" and REG_HOLDING_MAX_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (MAX)...")
+            
+            # Block 1: 0-99 (Basic settings)
+            block1 = self._read_block(0, 100, REG_HOLDING_MAX_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: 125-224 (Advanced settings)
+            block2 = self._read_block(125, 100, REG_HOLDING_MAX_MAP_EXTENDED, is_input_reg=False)
+            if block2:
+                data.update(block2)
+        # --- Logic for TL-XH / MIN Series ---
+        elif (self.model == "TL-XH" or self.model == "TL-XH-MIN") and REG_HOLDING_TLXH_MIN_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (TL-XH/MIN)...")
+            
+            # Block 1: Basic (0-100)
+            block1 = self._read_block(0, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Advanced & Time (3000-3100)
+            block2 = self._read_block(3000, 100, REG_HOLDING_TLXH_MIN_BAT_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+            
+            # Block 3: Extended/US (3125-3225)
+            block3 = self._read_block(3125, 100, REG_HOLDING_TLXH_US_MAP, is_input_reg=False)
+            if block3:
+                data.update(block3)
+        # --- Logic for MIX (SPH/Hybrid) Series ---
+        elif self.model == "MIX" and REG_HOLDING_MIX_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (MIX)...")
+            
+            # Block 1: Basic Inverter Settings (0-100)
+            block1 = self._read_block(0, 100, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Storage & Strategy Settings (1000-1100)
+            block2 = self._read_block(1000, 100, REG_HOLDING_MIX_STORAGE_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+
+        # --- Logic for SPA (AC-Coupled Storage) ---
+        elif self.model == "SPA" and REG_HOLDING_SPA_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (SPA)...")
+            
+            # Block 1: Basic Settings (0-100)
+            block1 = self._read_block(0, 100, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Storage Strategy (1000-1100)
+            block2 = self._read_block(1000, 100, REG_HOLDING_SPA_STRAT_CHRG_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+
+        # --- Logic for SPH (Hybrid Storage) ---
+        elif self.model == "SPH" and REG_HOLDING_SPH_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (SPH)...")
+            
+            # Block 1: Basic Settings (0-100)
+            block1 = self._read_block(0, 100, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            if block1:
+                data.update(block1)
+
+            # Block 2: Hybrid Strategy (1000-1100)
+            block2 = self._read_block(1000, 100, REG_HOLDING_SPH_H_BAT_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+        return data
+
+    def _read_block(self, start_reg, length, map_ref, is_input_reg=True):
+        """
+        Reads a contiguous block of registers and parses them using the provided map.
+        :param start_reg: Start address of the block
+        :param length: Number of registers to read
+        :param map_ref: The dictionary containing the register definitions
+        :param is_input_reg: True for Input Registers (04), False for Holding Registers (03)
+        :return: Dictionary of parsed data or None on error
+        """
         try:
-            self.read_info()
-        except ModbusIOException:
-            self.__log.warning("Inverter not reachable, will retry every hour.")
-        for i in range(10):
-            sleep(3600)
-            try:
-                self.read_info()
-                self.__log.info("Inverter connection re-established.")
-                break
-            except ModbusIOException:
-                self.__log.warning(f"Retry {i+1}/10 failed, inverter still offline.")
-        else:
-            self.__log.error(
-                "Inverter not reachable after 10 retries. Continuing without data."
-            )
-            self.modbus_version = None
+            if is_input_reg:
+                rr = self.client.read_input_registers(start_reg, length, unit=self.unit)
+            else:
+                rr = self.client.read_holding_registers(start_reg, length, unit=self.unit)
 
-    def read_info(self):
-        """reads holding registers from Growatt inverters"""
-        row = self.client.read_holding_registers(73, unit=self.unit)
-        if row.isError():
-            raise ModbusIOException
-
-        self.modbus_version = row.registers[0]
-
-    def print_info(self):
-        """prints basic information about the current Growatt inverter"""
-        self.__log.info("Growatt:")
-        self.__log.info("\tName: %s\n", str(self.name))
-        self.__log.info("\tUnit: %s\n", str(self.unit))
-        self.__log.info("\tModbus Version: %s\n", str(self.modbus_version))
-
-    def read(self):
-        """this function reads based on the given ModBus RTU protocol version the ModBus data from growatt inverters"""
-        if self.protocol_version == "MAXSeries":
-            self.__log.info("MAX Series Protocol\n")
-            row = self.client.read_input_registers(0, 117, unit=self.unit)
-            if row.isError():
-                self.__log.error(row.__str__)
+            if isinstance(rr, ModbusIOException) or rr.isError():
+                self.log.error(f"Modbus Error reading block {start_reg}: {rr}")
                 return None
-            info = {  # ==================================================================
-                # N/A,      Inverter Status,    Inverter run state
-                "StatusCode": row.registers[0],
-                "Status": StateCodes[row.registers[0]],
-                # 0.1W,     Ppv H,              Input power (high)
-                "Ppv": read_double(row, 1),
-                # 0.1W,     Ppv L,              Input power (low)
-                # 0.1V,     Vpv1,               PV1 voltage
-                "Vpv1": read_single(row, 3),
-                # 0.1A,     PV1Curr,            PV1 input current
-                "PV1Curr": read_single(row, 4),
-                # 0.1W,     PV1Watt H,          PV1 input power (high)
-                "PPV1InPwr": read_double(row, 5),
-                # 0.1W,     PV1Watt L,          PV1 input power (low)
-                # 0.1V,     Vpv2,               PV2 voltage
-                "Vpv2": read_single(row, 7),
-                # 0.1A,     PV2Curr,            PV2 input current
-                "PV2Curr": read_single(row, 8),
-                # 0.1W,     PV2Watt H,          PV2 input watt (high)
-                "PPV2inPwr": read_double(row, 9),
-                # 0.1W,     PV2Watt L,          PV2 input watt (low)
-                # 0.1V,     Vpv3,               PV3 voltage
-                "Vpv3": read_single(row, 11),
-                # 0.1A,     PV3Curr,            PV3 input current
-                "PV3Curr": read_single(row, 12),
-                # 0.1W,     PV3Watt H,          PV3 input watt (high)
-                "PPV3inPwr": read_double(row, 13),
-                # 0.1W,     PV3Watt L,          PV3 input watt (low)
-                # 0.1V,     Vpv4,               PV4 voltage
-                "Vpv4": read_single(row, 15),
-                # 0.1A,     PV4Curr,            PV4 input current
-                "PV4Curr": read_single(row, 16),
-                # 0.1W,     PV4Watt H,          PV4 input watt (high)
-                "PPV4inPwr": read_double(row, 17),
-                # 0.1W,     PV4Watt L,          PV4 input watt (low)
-                # 0.1V,     Vpv5,               PV5 voltage
-                "Vpv5": read_single(row, 19),
-                # 0.1A,     PV5Curr,            PV5 input current
-                "PV5Curr": read_single(row, 20),
-                # 0.1W,     PV5Watt H,          PV5 input watt (high)
-                "PPV5inPwr": read_double(row, 21),
-                # 0.1W,     PV5Watt L,          PV5 input watt (low)
-                # 0.1V,     Vpv6,               PV6 voltage
-                "Vpv6": read_single(row, 23),
-                # 0.1A,     PV6Curr,            PV6 input current
-                "PV6Curr": read_single(row, 24),
-                # 0.1W,     PV6Watt H,          PV6 input watt (high)
-                "PPV6inPwr": read_double(row, 25),
-                # 0.1W,     PV6Watt L,          PV6 input watt (low)
-                # 0.1V,     Vpv7,               PV7 voltage
-                "Vpv7": read_single(row, 27),
-                # 0.1A,     PV7Curr,            PV7 input current
-                "PV7Curr": read_single(row, 28),
-                # 0.1W,     PV7Watt H,          PV7 input watt (high)
-                "PPV7inPwr": read_double(row, 29),
-                # 0.1W,     PV7Watt L,          PV7 input watt (low)
-                # 0.1V,     Vpv8,               PV8 voltage
-                "Vpv8": read_single(row, 31),
-                # 0.1A,     PV8Curr,            PV8 input current
-                "PV8Curr": read_single(row, 32),
-                # 0.1W,     PV8Watt H,          PV8 input watt (high)
-                "PPV8inPwr": read_double(row, 33),
-                # 0.1W,     PV8Watt L,          PV8 input watt (low)
-                # 0.1W,     Pac H,              Output power (high)
-                "Pac": read_double(row, 35),
-                # 0.1W,     Pac L,              Output power (low)
-                # 0.01Hz,   Fac,                Grid frequency
-                "Fac": read_single(row, 37, 100),
-                # 0.1V,  Vac1,               Three/single phase grid voltage
-                "Vac1": read_single(row, 38),
-                # 0.1A,  Iac1,               Three/single phase grid output current
-                "Iac1": read_single(row, 39),
-                # 0.1VA , Pac1 H,             Three/single phase grid output watt (high)
-                "Pac1H": read_double(row, 40),
-                # 0.1VA, Pac1 L,
-                # 0.1V   Vac2                  Three phase grid voltage
-                "Vac2": read_single(row, 42),
-                # 0.1A,  Iac2,               Three/single phase grid output current
-                "Iac2": read_single(row, 43),
-                # 0.1VA , Pac2 H,             Three/single phase grid output watt (high)
-                "Pac2H": read_double(row, 44),
-                # 0.1VA, Pac2 L,
-                # 0.1V   Vac3                  Three phase grid voltage
-                "Vac3": read_single(row, 46),
-                # 0.1A,  Iac3,               Three/single phase grid output current
-                "Iac3": read_single(row, 47),
-                # 0.1VA , Pac3 H,             Three/single phase grid output watt (high)
-                "Pac3H": read_double(row, 48),
-                # 0.1VA, Pac3 L,
-                # 0.1V   VacRS                  Three phase grid voltage
-                "VacRS": read_single(row, 50),
-                # 0.1V   VacST                  Three phase grid voltage
-                "VacST": read_single(row, 51),
-                # 0.1V   VacTR                  Three phase grid voltage
-                "VacTR": read_single(row, 52),
-                # 0.1kWH   Eac today H         Today generate energy (high)
-                "PVPowerToday": read_double(row, 53),
-                # 0.1kWH        Eac today L       Today generate energy (low)
-                # 0.1kWH   Eac total H         Total generate energy (high)
-                "PVPowerTotal": read_double(row, 55),
-                # 0.1kWH        Eac total L       Total generate energy (low)
-                # ,      # 0.5s   Time total H         Work time total (high)
-                "TimeTotal": read_double(row, 57),
-                # 0.5s   Time total L       Work time total (low)
-                "Epv1Today": read_double(
-                    row, 59
-                ),  # 0.1kWH   Epv1_today H         PV1 Energy today (high)
-                # 0.1kWH        Epv1_today L       PV1 Energy today (low)
-                "Epv1Total": read_double(
-                    row, 61
-                ),  # 0.1kWH   Epv1_total H         PV1 Energy total (high)
-                # 0.1kWH        Epv1_total L       PV1 Energy total (low)
-                "Epv2Today": read_double(
-                    row, 63
-                ),  # 0.1kWH   Epv2_today H         PV2 Energy today (high)
-                # 0.1kWH        Epv2_today L       PV2 Energy today (low)
-                "Epv2Total": read_double(
-                    row, 65
-                ),  # 0.1kWH   Epv2_total H         PV2 Energy total (high)
-                # 0.1kWH        Epv2_total L       PV2 Energy total (low)
-                "Epv3Today": read_double(
-                    row, 67
-                ),  # 0.1kWH   Epv3_today H         PV3 Energy today (high)
-                # 0.1kWH        Epv3_today L       PV3 Energy today (low)
-                "Epv3Total": read_double(
-                    row, 69
-                ),  # 0.1kWH   Epv3_total H         PV3 Energy total (high)
-                # 0.1kWH        Epv3_total L       PV3 Energy total (low)
-                "Epv4Today": read_double(
-                    row, 71
-                ),  # 0.1kWH   Epv4_today H         PV4 Energy today (high)
-                # 0.1kWH        Epv4_today L       PV4 Energy today (low)
-                "Epv4Total": read_double(
-                    row, 73
-                ),  # 0.1kWH   Epv4_total H         PV4 Energy total (high)
-                # 0.1kWH        Epv4_total L       PV4 Energy total (low)
-                "Epv5Today": read_double(
-                    row, 75
-                ),  # 0.1kWH   Epv5_today H         PV5 Energy today (high)
-                # 0.1kWH        Epv5_today L       PV5 Energy today (low)
-                "Epv5Total": read_double(
-                    row, 77
-                ),  # 0.1kWH   Epv5_total H         PV5 Energy total (high)
-                # 0.1kWH        Epv5_total L       PV5 Energy total (low)
-                "Epv6Today": read_double(
-                    row, 79
-                ),  # 0.1kWH   Epv6_today H         PV6 Energy today (high)
-                # 0.1kWH        Epv6_today L       PV6 Energy today (low)
-                "Epv6Total": read_double(
-                    row, 81
-                ),  # 0.1kWH   Epv6_total H         PV6 Energy total (high)
-                # 0.1kWH        Epv6_total L       PV6 Energy total (low)
-                "Epv7Today": read_double(
-                    row, 83
-                ),  # 0.1kWH   Epv7_today H         PV7 Energy today (high)
-                # 0.1kWH        Epv7_today L       PV7 Energy today (low)
-                "Epv7Total": read_double(
-                    row, 85
-                ),  # 0.1kWH   Epv7_total H         PV7 Energy total (high)
-                # 0.1kWH        Epv7_total L       PV7 Energy total (low)
-                "Epv8Today": read_double(
-                    row, 87
-                ),  # 0.1kWH   Epv8_today H         PV8 Energy today (high)
-                # 0.1kWH        Epv8_today L       PV8 Energy today (low)
-                "Epv8Total": read_double(
-                    row, 89
-                ),  # 0.1kWH   Epv8_total H         PV8 Energy total (high)
-                # 0.1kWH        Epv8_total L       PV8 Energy total (low)
-                "EpvTotal": read_double(
-                    row, 91
-                ),  # 0.1kWH   Epv_total H        PV Energy total (high)
-                # 0.1kWH        Epv_total L       PV Energy total (low)
-                "Temp1": read_single(
-                    row, 93
-                ),  # 0.1C   Temp1                  Inverter temperature
-                "Temp2": read_single(
-                    row, 94
-                ),  # 0.1C   Temp2                  The inside IPM in inverter Temperature
-                "Temp3": read_single(
-                    row, 95
-                ),  # 0.1C   Temp3                  Boost temperature
-                "Temp4": read_single(row, 96),  # 0.1C   Temp4
-                "Temp5": read_single(row, 97),  # 0.1C   Temp5
-                "PBusV": read_single(
-                    row, 98
-                ),  # 0.1V   P Bus Voltage         P Bus inside Voltage
-                "NBusV": read_single(
-                    row, 99
-                ),  # 0.1V   N Bus Voltage         N Bus inside Voltage
-                "IPF": read_single(
-                    row, 100
-                ),  # 0.1W   IPF          Inverter output PF now
-                "RealOPPercent": read_single(
-                    row, 101
-                ),  # 1% RealOPPercent Real Output power Percent
-                "OPFullwatt": read_double(
-                    row, 102
-                ),  # 0.1W OPFullwatt H  Output Maxpower Limited high
-                "DeratingModeRaw": read_single(
-                    row, 104
-                ),  # 104. DeratingMode DeratingMode 0:no derate
-                "DeratingMode": DeratingMode[read_single(row, 104)],
-                "Fault code": read_single(
-                    row, 105
-                ),  # Fault code Inverter fault code &*1
-                "Fault Bitcode": read_double(
-                    row, 106
-                ),  # 106. Fault Bitcode H Inverter fault code high
-                "Fault Bit_II": read_double(
-                    row, 108
-                ),  # Fault Bit_II H Inverter fault code_II high
-                "Warning bit": read_double(row, 110),  # Warning bit H Warning bit H
-                "bINVWarnCode": read_single(row, 112),  # bINVWarnCode bINVWarnCode
-                "realPowerPercent": read_single(
-                    row, 113
-                ),  # real Power Percent real Power Percent 0-100%
-                "InvStartDelay": read_single(
-                    row, 114
-                ),  # inv start delay time inv start delay time
-                "bINVAllFaultCode": read_single(
-                    row, 115
-                ),  # bINVAllFaultCode bINVAllFaultCode
-            }
-            # row = self.client.read_input_registers(125, 48, unit=self.unit)#TODO add third group
-            # info = merge(info, {
-            #     'PIDPV1V': read_single(row, 0),  #ID PV1+ Voltage PID PV1PE Volt 0~1000V 0.1V
-            #     'PIDPV1C': read_single(row, 1),  # PID PV1+ Current PID PV1PE Curr -10~10mA 0.1mA
-            #     'PIDPV2V': read_single(row, 2),  # PID PV2+ Voltage PID PV2PE Volt 0~1000V 0.1V
-            #     'PIDPV2C': read_single(row, 3),  # PID PV2+ Current PID PV1PE Curr -10~10mA 0.1mA
-            #     'PIDPV3V': read_single(row, 4),  # PID PV3+ Voltage PID PV2PE Volt 0~1000V 0.1V
-            #     'PIDPV3C': read_single(row, 5),  # PID PV3+ Current PID PV1PE Curr -10~10mA 0.1mA
-            #     'PIDPV4V': read_single(row, 6),  # PID PV4+ Voltage PID PV2PE Volt 0~1000V 0.1V
-            #     'PIDPV4C': read_single(row, 7),  # PID PV4+ Current PID PV1PE Curr -10~10mA 0.1mA
-            #     'PIDPV5V': read_single(row, 8),  # PID PV5+ Voltage PID PV2PE Volt 0~1000V 0.1V
-            #     'PIDPV5C': read_single(row, 9),  # PID PV5+ Current PID PV1PE Curr -10~10mA 0.1mA
-            #     'PIDPV6V': read_single(row, 10),  # PID PV4+ Voltage PID PV2PE Volt 0~1000V 0.1V
-            #     'PIDPV6C': read_single(row, 11),  # PID PV4+ Current PID PV1PE Curr -10~10mA 0.1mA
-            #     'PIDPV7V': read_single(row, 12),  # PID PV4+ Voltage PID PV2PE Volt 0~1000V 0.1V
-            #     'PIDPV7C': read_single(row, 13),  # PID PV4+ Current PID PV1PE Curr -10~10mA 0.1mA
-            #     'PIDPV8V': read_single(row, 14),  # PID PV4+ Voltage PID PV2PE Volt 0~1000V 0.1V
-            #     'PIDPV8C': read_single(row, 15),  # PID PV4+ Current PID PV1PE Curr -10~10mA 0.1mA
-            #     'PID Status Raw': read_single(row, 16), #Bit0~7:PID Working Status 1:Wait Status 2:Normal Status 3:Fault Status Bit8~15:Reversed
-            #     'PID Status': PIDStatus[read_single(row, 17)],
-            #     'V_String1': read_single(row, 18), #V _String1 PV String1 voltage 0.1V
-            #     'Curr_String1': read_single(row, 19), # Curr _String1 PV String1 current -15~15A 0.1A
-            #     'V_String2': read_single(row, 20), #V _String2 PV String1 voltage 0.1V
-            #     'Curr_String2': read_single(row, 21), # Curr _String2 PV String1 current -15~15A 0.1A
-            #     'V_String3': read_single(row, 22), #V _String3 PV String1 voltage 0.1V
-            #     'Curr_String3': read_single(row, 23), # Curr _String3 PV String1 current -15~15A 0.1A
-            #     'V_String4': read_single(row, 24), #V _String4 PV String1 voltage 0.1V
-            #     'Curr_String4': read_single(row, 25), # Curr _String4 PV String1 current -15~15A 0.1A
-            #     'V_String5': read_single(row, 26), #V _String5 PV String1 voltage 0.1V
-            #     'Curr_String5': read_single(row, 27), # Curr _String5 PV String1 current -15~15A 0.1A
-            #     'V_String6': read_single(row, 28), #V _String6 PV String1 voltage 0.1V
-            #     'Curr_String6': read_single(row, 29), # Curr _String6 PV String1 current -15~15A 0.1A
-            #     'V_String7': read_single(row, 30), #V _String7 PV String1 voltage 0.1V
-            #     'Curr_String7': read_single(row, 31), # Curr _String7 PV String1 current -15~15A 0.1A
-            #     'V_String8': read_single(row, 32), #V _String8 PV String1 voltage 0.1V
-            #     'Curr_String8': read_single(row, 33), # Curr _String8 PV String1 current -15~15A 0.1A
-            #     'V_String9': read_single(row, 34), #V _String9 PV String1 voltage 0.1V
-            #     'Curr_String9': read_single(row, 35), # Curr _String9 PV String1 current -15~15A 0.1A
-            #     'V_String10': read_single(row, 36), #V _String10 PV String1 voltage 0.1V
-            #     'Curr_String10': read_single(row, 37), # Curr _String10 PV String1 current -15~15A 0.1A
-            #     'V_String11': read_single(row, 38), #V _String11 PV String1 voltage 0.1V
-            #     'Curr_String11': read_single(row, 39), # Curr _String11 PV String1 current -15~15A 0.1A
-            #     'V_String12': read_single(row, 40), #V _String12 PV String1 voltage 0.1V
-            #     'Curr_String12': read_single(row, 41), # Curr _String12 PV String1 current -15~15A 0.1A
-            #     'V_String13': read_single(row, 42), #V _String13 PV String1 voltage 0.1V
-            #     'Curr_String13': read_single(row, 43), # Curr _String13 PV String1 current -15~15A 0.1A
-            #     'V_String14': read_single(row, 44), #V _String14 PV String1 voltage 0.1V
-            #     'Curr_String14': read_single(row, 45), # Curr _String14 PV String1 current -15~15A 0.1A
-            #     'V_String15': read_single(row, 46), #V _String15 PV String1 voltage 0.1V
-            #     'Curr_String15': read_single(row, 47), # Curr _String15 PV String1 current -15~15A 0.1A
-            #     'V_String16': read_single(row, 48), #V _String16 PV String1 voltage 0.1V
-            #     'Curr_String16': read_single(row, 49) # Curr _String16 PV String1 current -15~15A 0.1A
-            # })
-            return info
+            # Parse raw data using the register map
+            return self._parse_registers(rr, start_reg, map_ref)
+        except Exception as e:
+            self.log.exception(f"Exception reading block {start_reg}: {e}")
+            return None
 
-        elif self.protocol_version == "3.04" or self.protocol_version == "3.14":
-            row = self.client.read_input_registers(0, 33, unit=self.unit)
-            if row.isinstance(ModbusIOException):
-                self.__log.error(row.__str__)
-                return None
-            # http://www.growatt.pl/dokumenty/Inne/Growatt%20PV%20Inverter%20Modbus%20RS485%20RTU%20Protocol%20V3.04.pdf
-            #                                           # Unit,     Variable Name,      Description
-            info = {  # ==================================================================
-                # N/A,      Inverter Status,    Inverter run state
-                "StatusCode": row.registers[0],
-                "Status": StateCodes[row.registers[0]],
-                # 0.1W,     Ppv H,              Input power (high)
-                "Ppv": read_double(row, 1),
-                # 0.1W,     Ppv L,              Input power (low)
-                # 0.1V,     Vpv1,               PV1 voltage
-                "Vpv1": read_single(row, 3),
-                # 0.1A,     PV1Curr,            PV1 input current
-                "PV1Curr": read_single(row, 4),
-                # 0.1W,     PV1Watt H,          PV1 input watt (high)
-                "PV1Watt": read_double(row, 5),
-                # 0.1W,     PV1Watt L,          PV1 input watt (low)
-                # 0.1V,     Vpv2,               PV2 voltage
-                "Vpv2": read_single(row, 7),
-                # 0.1A,     PV2Curr,            PV2 input current
-                "PV2Curr": read_single(row, 8),
-                # 0.1W,     PV2Watt H,          PV2 input watt (high)
-                "PV2Watt": read_double(row, 9),
-                # 0.1W,     PV2Watt L,          PV2 input watt (low)
-                # 0.1W,     Pac H,              Output power (high)
-                "Pac": read_double(row, 11),
-                # 0.1W,     Pac L,              Output power (low)
-                # 0.01Hz,   Fac,                Grid frequency
-                "Fac": read_single(row, 13, 100),
-                # 0.1V,     Vac1,               Three/single phase grid voltage
-                "Vac1": read_single(row, 14),
-                # 0.1A,     Iac1,               Three/single phase grid output current
-                "Iac1": read_single(row, 15),
-                # 0.1VA,    Pac1 H,             Three/single phase grid output watt (high)
-                "Pac1": read_double(row, 16),
-                # 0.1VA,    Pac1 L,             Three/single phase grid output watt (low)
-                # 0.1V,     Vac2,               Three phase grid voltage
-                "Vac2": read_single(row, 18),
-                # 0.1A,     Iac2,               Three phase grid output current
-                "Iac2": read_single(row, 19),
-                # 0.1VA,    Pac2 H,             Three phase grid output power (high)
-                "Pac2": read_double(row, 20),
-                # 0.1VA,    Pac2 L,             Three phase grid output power (low)
-                # 0.1V,     Vac3,               Three phase grid voltage
-                "Vac3": read_single(row, 22),
-                # 0.1A,     Iac3,               Three phase grid output current
-                "Iac3": read_single(row, 23),
-                # 0.1VA,    Pac3 H,             Three phase grid output power (high)
-                "Pac3": read_double(row, 24),
-                # 0.1VA,    Pac3 L,             Three phase grid output power (low)
-                # 0.1kWh,   Energy today H,     Today generate energy (high)
-                "EnergyToday": read_double(row, 26),
-                # 0.1kWh,   Energy today L,     Today generate energy today (low)
-                # 0.1kWh,   Energy total H,     Total generate energy (high)
-                "EnergyTotal": read_double(row, 28),
-                # 0.1kWh,   Energy total L,     Total generate energy (low)
-                # 0.5S,     Time total H,       Work time total (high)
-                "TimeTotal": read_double(row, 30, 2),
-                # 0.5S,     Time total L,       Work time total (low)
-                # 0.1C,     Temperature,        Inverter temperature
-                "Temp": read_single(row, 32),
-            }
+    def _parse_registers(self, row, base_index, reg_map):
+        """
+        Generic Parser: Converts raw register data into readable values based on the map.
+        Handles data types (uint, int, uint32, ascii) and scaling.
+        """
+        results = {}
+        # Ensure we have valid register data
+        if not hasattr(row, 'registers') or not row.registers:
+            return results
 
-            row = self.client.read_input_registers(33, 8, unit=self.unit)
-            info = merge(
-                info,
-                {
-                    # 0.1V,     ISO fault Value,    ISO Fault value
-                    "ISOFault": read_single(row, 0),
-                    # 1mA,      GFCI fault Value,   GFCI fault Value
-                    "GFCIFault": read_single(row, 1, 1),
-                    # 0.01A,    DCI fault Value,    DCI fault Value
-                    "DCIFault": read_single(row, 2, 100),
-                    # 0.1V,     Vpv fault Value,    PV voltage fault value
-                    "VpvFault": read_single(row, 3),
-                    # 0.1V,     Vac fault Value,    AC voltage fault value
-                    "VavFault": read_single(row, 4),
-                    # 0.01 Hz,  Fac fault Value,    AC frequency fault value
-                    "FacFault": read_single(row, 5, 100),
-                    # 0.1C,     Temp fault Value,   Temperature fault value
-                    "TempFault": read_single(row, 6),
-                    # Fault code,         Inverter fault bit
-                    "FaultCode": row.registers[7],
-                    "Fault": ErrorCodes[row.registers[7]],
-                },
-            )
+        for name, (offset, length, scale, dtype) in reg_map.items():
+            # Safety check: Is the defined register inside the read block?
+            # Note: offset in map is relative to base_index
+            if offset + length > len(row.registers):
+                self.log.error(f"Register {name} (offset {offset}, length {length}) out of range in read block.")
+                continue
+            # Extract specific registers for this value
+            regs = row.registers[offset: offset + length]
+            val = 0
+            # --- Type Conversion ---
+            if dtype == "ascii":
+                try:
+                    # Pack as Big-Endian uint16 and decode to ASCII
+                    byte_data = b"".join(struct.pack(">H", r) for r in regs)
+                    # Remove null bytes and whitespace
+                    val = byte_data.decode("ascii", errors='ignore').strip('\x00').strip()
+                except Exception:
+                    val = str(regs)  # Fallback
 
-            # row = self.client.read_input_registers(41, 1, unit=self.unit)
-            # info = merge_dicts(info, {
-            #    'IPMTemp': read_single(row, 0),         # 0.1C,     IPM Temperature,    The inside IPM in inverter Temperature
-            # })
+            if dtype == "uint32":
+                val_standard = (regs[0] << 16) + regs[1]
+                # Smart Swap für Energie und Leistungswerte wenn nötig
+                if val_standard > 100000000 or (name.startswith("E_") and val_standard > 1000000):
+                    val = (regs[1] << 16) + regs[0]
+                else:
+                    val = val_standard
+                val = float(val) / scale
+            elif dtype == "uint":
+                val = regs[0]
+                if scale == 1:
+                    val = int(val)
+                else:
+                    val = float(val) / scale
 
-            row = self.client.read_input_registers(42, 2, unit=self.unit)
-            info = merge(
-                info,
-                {
-                    # 0.1V,     P Bus Voltage,      P Bus inside Voltage
-                    "PBusV": read_single(row, 0),
-                    # 0.1V,     N Bus Voltage,      N Bus inside Voltage
-                    "NBusV": read_single(row, 1),
-                },
-            )
+            elif dtype == "int32":
+                # 32-Bit Signed (High Word First)
+                val = (regs[0] << 16) + regs[1]
+                # Handle Two's Complement for negative values
+                if val > 0x7FFFFFFF:
+                    val -= 0x100000000
 
-            # row = self.client.read_input_registers(44, 3, unit=self.unit)
-            # info = merge_dicts(info, {
-            #                                            #           Check Step,         Product check step
-            #                                            #           IPF,                Inverter output PF now
-            #                                            #           ResetCHK,           Reset check data
-            # })
-            #
-            # row = self.client.read_input_registers(47, 1, unit=self.unit)
-            # info = merge_dicts(info, {
-            #    'DeratingMode': row.registers[6],       #           DeratingMode,       DeratingMode
-            #    'Derating': DeratingMode[row.registers[6]]
-            # })
+            elif dtype == "int":
+                # 16-Bit Signed
+                val = regs[0]
+                # Handle Two's Complement
+                if val > 0x7FFF:
+                    val -= 0x10000
+            elif dtype == "float":
+                # 32-Bit Float (2 Registers, Big Endian)
+                try:
+                    # pymodbus returns registers as list of int [HighWord, LowWord]
+                    # We pack them into binary data and unpack as float
+                    raw = struct.pack('>HH', regs[0], regs[1])
+                    val = struct.unpack('>f', raw)[0]
+                    val = round(val, 4)  # Optional: rounding
+                except Exception:
+                    val = 0.0
+            else:
+                # Default "uint" (16-Bit Unsigned)
+                val = regs[0]
+            results[name] = val
 
-            row = self.client.read_input_registers(48, 16, unit=self.unit)
-            info = merge(
-                info,
-                {
-                    # 0.1kWh,   Epv1_today H,       PV Energy today
-                    "Epv1_today": read_double(row, 0),
-                    # 0.1kWh,   Epv1_today L,       PV Energy today
-                    # 0.1kWh,   Epv1_total H,       PV Energy total
-                    "Epv1_total": read_double(row, 2),
-                    # 0.1kWh,   Epv1_total L,       PV Energy total
-                    # 0.1kWh,   Epv2_today H,       PV Energy today
-                    "Epv2_today": read_double(row, 4),
-                    # 0.1kWh,   Epv2_today L,       PV Energy today
-                    # 0.1kWh,   Epv2_total H,       PV Energy total
-                    "Epv2_total": read_double(row, 6),
-                    # 0.1kWh,   Epv2_total L,       PV Energy total
-                    # 0.1kWh,   Epv_total H,        PV Energy total
-                    "Epv_total": read_double(row, 8),
-                    # 0.1kWh,   Epv_total L,        PV Energy total
-                    # 0.1Var,   Rac H,              AC Reactive power
-                    "Rac": read_double(row, 10),
-                    # 0.1Var,   Rac L,              AC Reactive power
-                    # 0.1kVarh, E_rac_today H,      AC Reactive energy
-                    "E_rac_today": read_double(row, 12),
-                    # 0.1kVarh, E_rac_today L,      AC Reactive energy
-                    # 0.1kVarh, E_rac_total H,      AC Reactive energy
-                    "E_rac_total": read_double(row, 14),
-                    # 0.1kVarh, E_rac_total L,      AC Reactive energy
-                },
-            )
+        return results
 
-            # row = self.client.read_input_registers(64, 2, unit=self.unit)
-            # info = merge_dicts(info, {
-            #    'WarningCode': row.registers[0],        #           WarningCode,        Warning Code
-            #    'WarningValue': row.registers[1],       #           WarningValue,       Warning Value
-            # })
-            #
-            # info = merge_dicts(info, self.read_fault_table('GridFault', 90, 5))
-
-            return info
+    def _process_logic(self, data):
+        """
+        Post-processing logic:
+        - Split status bits
+        - Map error codes to text
+        - Calculate derived values if needed
+        """
+        # 1. Split Inverter Status (Register 3000 or 0)
+        # Low Byte = Status, High Byte = Run Mode
+        if "InverterStatus" in data and self.model == "TL-XH" or self.model == "MOD-XH":
+            print("inverter status processing")
+            raw = int(data["InverterStatus"])
+            status = raw & 0xFF
+            mode = (raw >> 8) & 0xFF
+            
+            data["StatusVal"] = INVERTER_WEB_PAGE_STATUS[status]
+            data["StatusMode"] = INVERTER_RUN_STATES[mode]
         else:
-            self.__log.error("Error unknown protocol %s\n", self.protocol_version)
+            status = int(data["InverterStatus"])
+            data["StatusText"] = STATE_CODES.get(status, f"Unknown({status})")
 
-    # def read_fault_table(self, name, base_index, count):
-    #     fault_table = {}
-    #     for i in range(0, count):
-    #         fault_table[name + '_' + str(i)] = self.read_fault_record(base_index + i * 5)
-    #     return fault_table
-    #
-    # def read_fault_record(self, index):
-    #     row = self.client.read_input_registers(index, 5, unit=self.unit)
-    #     # TODO: Figure out how to read the date for these records?
-    #     print(row.registers[0],
-    #             ErrorCodes[row.registers[0]],
-    #             '\n',
-    #             row.registers[1],
-    #             row.registers[2],
-    #             row.registers[3],
-    #             '\n',
-    #             2000 + (row.registers[1] >> 8),
-    #             row.registers[1] & 0xFF,
-    #             row.registers[2] >> 8,
-    #             row.registers[2] & 0xFF,
-    #             row.registers[3] >> 8,
-    #             row.registers[3] & 0xFF,
-    #             row.registers[4],
-    #             '\n',
-    #             2000 + (row.registers[1] >> 4),
-    #             row.registers[1] & 0xF,
-    #             row.registers[2] >> 4,
-    #             row.registers[2] & 0xF,
-    #             row.registers[3] >> 4,
-    #             row.registers[3] & 0xF,
-    #             row.registers[4]
-    #           )
-    #     return {
-    #         'FaultCode': row.registers[0],
-    #         'Fault': ErrorCodes[row.registers[0]],
-    #         #'Time': int(datetime.datetime(
-    #         #    2000 + (row.registers[1] >> 8),
-    #         #    row.registers[1] & 0xFF,
-    #         #    row.registers[2] >> 8,
-    #         #    row.registers[2] & 0xFF,
-    #         #    row.registers[3] >> 8,
-    #         #    row.registers[3] & 0xFF
-    #         #).timestamp()),
-    #         'Value': row.registers[4]
-    #     }
+        # 2. Map Fault Codes to Text
+        if "FaultCode" in data:
+            code = int(data["FaultCode"])
+            data["FaultText"] = ERROR_CODES.get(code, f"Error {code}")
+
+        # 3. Map Derating Mode to Text
+        if "DeratingMode" in data:
+            code = int(data["DeratingMode"])
+            data["DeratingText"] = DERATING_MODE.get(code, "Unknown")
+            
+        return data
+
+    def update(self):
+        """
+        Main method to read data.
+        Selects the appropriate register blocks based on the initialized 'model'.
+        """
+        data = {}
+        # --- Logic for TL-XH Series (Battery Ready) ---
+        if (self.model == "TL-XH" or self.model == "TL_X") and MAP_TLXH_3000:
+            # Block 1: Inverter Data (3000-3124) -> 125 Registers
+            block1 = self._read_block(3000, 125, MAP_TLXH_3000, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            if self.model == "TL-XH":
+                # Block 2: Battery Data (3125-3249) -> 125 Registers
+                # Reads Battery/BMS data specifically for XH series
+                block2 = self._read_block(3125, 125, MAP_TLXH_3000_BAT, is_input_reg=True)
+                if block2:
+                    data.update(block2)
+        # --- Logic for TL3X / Legacy Series ---
+        elif self.model == "TL3X" and MAP_TL3X_0:
+            # Block 1: Basic Data (0-124)
+            block1 = self._read_block(0, 125, MAP_TL3X_0, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            # Block 2: String & PID Data (125-249)
+            block2 = self._read_block(125, 125, MAP_TL3X_125, is_input_reg=True)
+            if block2:
+                data.update(block2)
+        # --- Logic for MAX 1500V、MAX-X LV Series ---
+        elif self.model == "MAX" and MAP_MAX:
+            # Block 1: Basic Data (0-124)
+            block1 = self._read_block(0, 125, MAP_MAX, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            # Block 2: String & PID Data (125-249)
+            block2 = self._read_block(125, 125, MAP_MAX_STRING, is_input_reg=True)
+            if block2:
+                data.update(block2)
+            # Block 3: Extended Data (875-999)
+            block3 = self._read_block(875, 125, MAP_MAX_DATA, is_input_reg=True)
+            if block3:
+                data.update(block3)
+        # --- Logic for TL-XH MIN Series ---
+        elif (self.model == "TL-XH_MIN" or self.model == "TL_X_MIN") and MAP_TLXH_MIN:
+            # Block 1: Inverter Data (3000-3124) -> 125 Registers
+            block1 = self._read_block(3000, 125, MAP_TLXH_MIN, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            if self.model == "TL-XH_MIN":
+                # Block 2: Battery Data (3125-3249) -> 125 Registers
+                block2 = self._read_block(3125, 125, MAP_TLXH_MIN_BAT, is_input_reg=True)
+                if block2:
+                    data.update(block2)
+                # Block 3: Extended Battery Data (3250-3374) -> 125 Registers
+                block3 = self._read_block(3250, 125, MAP_TLXH_MIN_BAT_BDC, is_input_reg=True)
+                if block3:
+                    data.update(block3)
+        # --- Logic for Storage / Hybrid MIX Series ---
+        elif self.model == "MIX" and MAP_MIX:
+            # Block 1: Basic Inverter Data (0-124)
+            block1 = self._read_block(0, 125, MAP_MIX, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            # Block 2: Storage / Hybrid Data (1000-1124)
+            block2 = self._read_block(1000, 125, MAP_MIX_H, is_input_reg=True)
+            if block2:
+                data.update(block2)
+        # --- Logic for Storage / Hybrid SPA Series ---
+        elif self.model == "SPA" and MAP_SPA:
+            # Block 1: Storage / Hybrid Data (1000-1124)
+            block1 = self._read_block(1000, 125, MAP_SPA, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            # Block 2: Extended Battery Info (1125-1249)
+            block2 = self._read_block(1125, 125, MAP_SPA_EXT_BAT, is_input_reg=True)
+            if block2:
+                data.update(block2)
+            # Block 3: SPA Specific AC/Grid Data (2000-2124)
+            block3 = self._read_block(2000, 125, MAP_SPA_AC_GRID, is_input_reg=True)
+            if block3:
+                data.update(block3)
+        # --- Logic for Storage / Hybrid SPH Series ---
+        elif self.model == "SPH" and MAP_SPH:
+            # Block 1: Basic Inverter Data (0-124)
+            block1 = self._read_block(0, 125, MAP_SPH, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            # Block 2: Storage / Hybrid Data (1000-1124)
+            block2 = self._read_block(1000, 125, MAP_SPH_STORAGE, is_input_reg=True)
+            if block2:
+                data.update(block2)
+            # Block 3: Extended Battery Info (1125-1249)
+            block3 = self._read_block(1125, 125, MAP_SPH_EXT_SYS, is_input_reg=True)
+            if block3:
+                data.update(block3)
+        # --- Logic for Smart Meters EASTRON / CHINT ---
+        elif self.model == "EASTRON" and MAP_EASTRON:
+            # Block 1: Meter Data (0-49)
+            block1 = self._read_block(0, 50, MAP_EASTRON, is_input_reg=True)
+            if block1:
+                data.update(block1)
+        elif self.model == "CHINT" and MAP_CHINT:
+            # Block 1: Meter Data (0-49)
+            block1 = self._read_block(0, 50, MAP_CHINT, is_input_reg=True)
+            if block1:
+                data.update(block1)
+        # --- Logic for MOD TL3-XH Series ---
+        elif self.model == "MOD-XH" and MAP_MOD_TL3_XH:
+            # Block 1: MOD TL3-XH Data (3000-3124)
+            block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            if block1:
+                data.update(block1)
+            # Block 2: Battery/BDC Data (3125-3249)
+            block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH_BAT, is_input_reg=True)
+            if block2:
+                data.update(block2)
+        else:
+            self.log.warning(f"No valid register map found for model: {self.model}")
+            self.log.warning(self.get_supported_models_help)
+
+        # Apply post-processing (Text mapping, bit splitting)
+        if data:
+            data = self._process_logic(data)
+        return data
+
+    def get_supported_models_help(self):
+        return """
+        Supported Inverter Models (Protocol Shortcodes):
+        ------------------------------------------------
+        Use these codes to select the correct register map for your device:
+
+        1. TL-XH
+            - Description: Growatt TL-XH "Battery Ready" Series (High Voltage Battery).
+            - Registers: 3000-3124 (Inverter), 3125-3249 (Battery/BDC).
+
+        2. TL3X
+            - Description: Standard TL-X / TL3-X / MIC / MIN / MAC PV-only inverters.
+            - Registers: 0-124 (Basic), 125-249 (String/PID).
+
+        3. MAX
+            - Description: Commercial MAX 1500V / MAX-X LV Series.
+            - Registers: 0-124, 125-249, 875-999 (High Power/Extra Strings).
+
+        4. TL-XH-MIN
+            - Description: MIN TL-XH (US/Global) Single Phase Hybrid.
+            - Registers: 3000-3124, 3125-3249, 3250-3374 (Extended Battery).
+
+        5. MIX
+            - Description: SPH Series / MIX (Hybrid Storage).
+            - Registers: 0-124 (Inverter), 1000-1124 (Storage/Energy Flow).
+
+        6. SPA
+            - Description: SPA Series (AC-Coupled Storage Retrofit).
+            - Registers: 1000-1124, 1125-1249, 2000-2124 (AC Grid Data).
+
+        7. SPH
+            - Description: SPH 3000-6000 Hybrid Inverters.
+            - Registers: 0-124, 1000-1124, 1125-1249 (Extended Info).
+        8. EASTRON
+            - Description: Smart Meter - EASTRON Series.
+            - Registers: 0-49 (Meter Data).
+        9. CHINT
+            - Description: Smart Meter - CHINT Series.
+            - Registers: 0-49 (Meter Data).
+        10. MOD-XH
+            - Description: Growatt MOD TL3-XH 3-Phase Battery Ready Hybrid Inverters.
+            - Registers: 3000-3124 (Inverter), 3125-3249 (Battery/BDC).
+        Usage Example:
+        python growatt2mqtt.py --model TL-XH
+        """
+
+    def read_holding(self):
+        """
+        Reads Holding Registers (Settings, Serial Number, etc.).
+        Usually starts at 3000 for TL-X series.
+        """
+        return {}
