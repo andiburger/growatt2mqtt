@@ -364,6 +364,7 @@ class Growatt:
             # Safety check: Is the defined register inside the read block?
             # Note: offset in map is relative to base_index
             if offset + length > len(row.registers):
+                print("skipping, out of range")
                 continue
             # Extract specific registers for this value
             regs = row.registers[offset: offset + length]
