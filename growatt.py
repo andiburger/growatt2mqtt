@@ -366,6 +366,9 @@ class Growatt:
             # Extract specific registers for this value
             regs = row.registers[offset: offset + length]
             val = 0
+            print(name)
+            print(regs)
+            print(regs[0])
             # --- Type Conversion ---
             if dtype == "ascii":
                 try:
