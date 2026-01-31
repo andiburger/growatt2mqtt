@@ -428,6 +428,7 @@ class Growatt:
                 val = float(val) / scale
 
             results[name] = val
+            print(results[name])
 
         return results
 
@@ -440,7 +441,7 @@ class Growatt:
         """
         # 1. Split Inverter Status (Register 3000 or 0)
         # Low Byte = Status, High Byte = Run Mode
-        if "InverterStatus" in data and self.model == "TL-XH" or self.model == "TL_X":
+        if "InverterStatus" in data and self.model == "TL-XH" or self.model == "MOD-XH":
             raw = int(data["InverterStatus"])
             status = raw & 0xFF
             mode = (raw >> 8) & 0xFF
