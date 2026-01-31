@@ -417,12 +417,6 @@ class Growatt:
             else:
                 # Default "uint" (16-Bit Unsigned)
                 val = regs[0]
-
-            # --- Scaling ---
-            # Apply scaling only if it's a number and scale is not 1
-            if scale != 1 and isinstance(val, (int, float)):
-                val = float(val) / scale
-
             results[name] = val
         print(results)
 
