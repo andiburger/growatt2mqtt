@@ -232,13 +232,12 @@ class Growatt:
                     val = str(regs)
 
             elif dtype == "uint32":
-                # Standard Big Endian Berechnung (High, Low)
+                # Standard: High-Byte zuerst (wie bei deiner PV Leistung gesehen: 0, 14500)
                 val_standard = (regs[0] << 16) + regs[1]
                 
-                # Check auf unsinnig große Werte (> 100 Mio), die auf einen nötigen Swap hindeuten
-                # oder ob es ein Energie-Zähler ist (startet meist mit 'E_')
+                # Smart-Check: Wenn der Wert riesig ist (>100 Mio) ODER es ein Energiewert ist,
+                # dann ist er wahrscheinlich verdreht (Little Endian).
                 if val_standard > 100000000 or (name.startswith("E_") and val_standard > 1000000):
-                    # Little Endian (Low, High)
                     val = (regs[1] << 16) + regs[0]
                 else:
                     val = val_standard

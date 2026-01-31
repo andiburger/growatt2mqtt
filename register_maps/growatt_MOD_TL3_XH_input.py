@@ -1,22 +1,3 @@
-#!/usr/bin/env python3
-"""
-growatt_MOD_TL3_XH_input.py
-
-Modbus Input Register Map for Growatt MOD TL3-XH Inverters.
-(3-Phase Battery Ready Hybrid Inverters).
-Based on Protocol V1.24 - INPUT REGISTERS (Function Code 04).
-
-Covered Ranges:
-- 3000-3124: Basic Inverter Data (PV, Grid 3-Phase, Energy)
-- 3125-3249: Battery / BDC Data (XH Series)
-
-Tuple structure:
-(Offset from base index, Length in registers, Scaling factor, Type)
-"""
-"""
-growatt_MOD_TL3_XH_input.py
-Corrected Map with Dummy Register shift for new Firmware.
-"""
 REG_INPUT_MOD_TL3_XH_MAP = {
     "InverterStatus": (0, 1, 1, "uint"),
     "PpvInput": (1, 2, 10, "uint32"),
@@ -59,10 +40,6 @@ REG_INPUT_MOD_TL3_XH_MAP = {
     "Epv1_Total": (57, 2, 10, "uint32"),
     "Epv2_Today": (59, 2, 10, "uint32"),
     "Epv2_Total": (61, 2, 10, "uint32"),
-    "Epv3_Today": (63, 2, 10, "uint32"),
-    "Epv3_Total": (65, 2, 10, "uint32"),
-    "Epv4_Today": (67, 2, 10, "uint32"),
-    "Epv4_Total": (69, 2, 10, "uint32"),
     "DeratingMode": (88, 1, 1, "uint"),
     "TempInverter": (89, 1, 10, "uint"),
     "TempIPM": (90, 1, 10, "uint"),
