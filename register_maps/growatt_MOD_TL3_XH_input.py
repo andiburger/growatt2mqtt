@@ -123,9 +123,10 @@ REG_INPUT_MOD_TL3_XH_MAP = {
     "WarnCode": (106, 1, 1, "uint"),
 
     # 3123-3124: System Energy Today - 0.1kWh
-    "Esys_Today": (123, 2, 10, "uint32"),
+    "Esys_Today": (123, 2, 10, "uint32")
+}
 
-
+REG_INPUT_MOD_TL3_XH_BAT_MAP = {
     # =================================================================
     # GROUP 2: Battery / BDC Data (3125-3249)
     # =================================================================
