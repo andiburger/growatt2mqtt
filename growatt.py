@@ -570,7 +570,7 @@ class Growatt:
         # --- Logic for MOD TL3-XH Series ---
         elif self.model == "MOD-XH" and MAP_MOD_TL3_XH:
             # Block 1: MOD TL3-XH Data (3000-3124)
-            block1 = self._read_block(3001, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
             if block1:
                 data.update(block1)
             # Block 2: Battery/BDC Data (3125-3249)
