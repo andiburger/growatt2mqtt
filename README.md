@@ -139,4 +139,8 @@ If you receive no data or errors:
 + Set log_level = DEBUG in growatt2mqtt.cfg to see raw Modbus frames and parser outputs.
 
 ## Compatibility
-Currently the code is tested for the following models: Growatt MIC 600TL-X and Growatt MOD 5000TL3-XH.
+Currently the code is tested for the following models: 
+| Model | Compatibility | Covered Registers |
+| :---------| :--------------------------- | :---------------- |
+| Growatt MOD 5000TL3-XH |  &#x2611; | Input Reg / Holding Reg |
+| Growatt MIC 600TL-X | &#x2612;| to be confirmed |
