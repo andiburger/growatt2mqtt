@@ -232,11 +232,12 @@ class Growatt:
                     val = str(regs)
 
             elif dtype == "uint32":
-                # Standard: High-Byte zuerst (wie bei deiner PV Leistung gesehen: 0, 14500)
+                # Standard (Big Endian) berechnen
                 val_standard = (regs[0] << 16) + regs[1]
                 
-                # Smart-Check: Wenn der Wert riesig ist (>100 Mio) ODER es ein Energiewert ist,
-                # dann ist er wahrscheinlich verdreht (Little Endian).
+                # SMART SWAP LOGIK:
+                # Wenn der Wert > 100 Mio ist ODER der Name mit "E_" (Energie) beginnt...
+                # ...dann müssen wir die Bytes tauschen (Little Endian).
                 if val_standard > 100000000 or (name.startswith("E_") and val_standard > 1000000):
                     val = (regs[1] << 16) + regs[0]
                 else:
