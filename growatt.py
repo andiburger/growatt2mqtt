@@ -363,11 +363,11 @@ class Growatt:
             # Note: offset in map is relative to base_index
             if offset + length > len(row.registers):
                 continue
-            print(row.registers)
             # Extract specific registers for this value
             regs = row.registers[offset: offset + length]
             val = 0
-
+            print(name)
+            print(regs)
             # --- Type Conversion ---
             if dtype == "ascii":
                 try:
@@ -386,6 +386,8 @@ class Growatt:
                 else:
                     val = val_standard
                 val = float(val) / scale
+            elif dtype == "uint":
+                val = float(regs[0]) / scale
 
             elif dtype == "int32":
                 # 32-Bit Signed (High Word First)
