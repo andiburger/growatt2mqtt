@@ -360,12 +360,6 @@ class Growatt:
             return results
 
         for name, (offset, length, scale, dtype) in reg_map.items():
-            print(f"Parsing {name} at offset {offset} length {length} scale {scale} type {dtype}")
-            # Safety check: Is the defined register inside the read block?
-            # Note: offset in map is relative to base_index
-            if offset + length > len(row.registers):
-                print("skipping, out of range")
-                continue
             # Extract specific registers for this value
             regs = row.registers[offset: offset + length]
             val = 0
