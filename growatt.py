@@ -355,12 +355,12 @@ class Growatt:
         Handles data types (uint, int, uint32, ascii) and scaling.
         """
         results = {}
-        print('row registers:', row.registers)
         # Ensure we have valid register data
         if not hasattr(row, 'registers') or not row.registers:
             return results
 
         for name, (offset, length, scale, dtype) in reg_map.items():
+            print(f"Parsing {name} at offset {offset} length {length} scale {scale} type {dtype}")
             # Safety check: Is the defined register inside the read block?
             # Note: offset in map is relative to base_index
             if offset + length > len(row.registers):
