@@ -366,8 +366,6 @@ class Growatt:
             # Extract specific registers for this value
             regs = row.registers[offset: offset + length]
             val = 0
-            print(name)
-            print(regs)
             # --- Type Conversion ---
             if dtype == "ascii":
                 try:
@@ -387,7 +385,11 @@ class Growatt:
                     val = val_standard
                 val = float(val) / scale
             elif dtype == "uint":
-                val = float(regs[0]) / scale
+                val = regs[0]
+                if scale == 1:
+                    val = int(val)
+                else:
+                    val = float(val) / scale
 
             elif dtype == "int32":
                 # 32-Bit Signed (High Word First)
