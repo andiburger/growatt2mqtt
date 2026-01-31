@@ -378,9 +378,14 @@ class Growatt:
                 except Exception:
                     val = str(regs)  # Fallback
 
-            elif dtype == "uint32":
-                # 32-Bit Unsigned (High Word First / Big Endian)
-                val = (regs[0] << 16) + regs[1]
+            if dtype == "uint32":
+                val_standard = (regs[0] << 16) + regs[1]
+                # Smart Swap für Energie und Leistungswerte wenn nötig
+                if val_standard > 100000000 or (name.startswith("E_") and val_standard > 1000000):
+                    val = (regs[1] << 16) + regs[0]
+                else:
+                    val = val_standard
+                val = float(val) / scale
 
             elif dtype == "int32":
                 # 32-Bit Signed (High Word First)
