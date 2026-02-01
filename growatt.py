@@ -104,11 +104,11 @@ except ImportError:
 
 # Holding Registers 
 try:
-    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_BASIC
-    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_ADVANCED
+    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP
+    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP
 except ImportError:
-    REG_HOLDING_MOD_TL3_XH_BASIC = {}
-    REG_HOLDING_MOD_TL3_XH_ADVANCED = {}
+    REG_HOLDING_MOD_TL3_XH_MAP = {}
+    REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {}
     logging.warning("Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited.")
 
 try:
@@ -260,16 +260,16 @@ class Growatt:
         """
         data = {}
         # --- Logic for MOD TL3-XH Series ---
-        if self.model == "MOD-XH" and REG_HOLDING_MOD_TL3_XH_BASIC:
+        if self.model == "MOD-XH" and REG_HOLDING_MOD_TL3_XH_MAP:
             self.log.info("Reading Holding Registers for MOD-XH...")
             # Block 1: Basic Settings (0-124)
             # is_input_reg=False to read holding registers (Function Code 03)
-            block1 = self._read_block(0, 70, REG_HOLDING_MOD_TL3_XH_BASIC, is_input_reg=False)
+            block1 = self._read_block(0, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
             if block1:
                 data.update(block1)
 
             # Block 2: Advanced Settings (3000-3124)
-            block2 = self._read_block(3000, 90, REG_HOLDING_MOD_TL3_XH_ADVANCED, is_input_reg=False)
+            block2 = self._read_block(3000, 100, REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP, is_input_reg=False)
             if block2:
                 data.update(block2)
         # --- Logic for MAX Series ---
