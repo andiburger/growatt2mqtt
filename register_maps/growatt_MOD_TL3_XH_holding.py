@@ -3,113 +3,141 @@
 growatt_MOD_TL3_XH_holding.py
 
 Modbus Holding Register Map for Growatt MOD TL3-XH Inverters.
-Based on Protocol V1.24 - HOLDING REGISTERS (Function Code 03).
+Based on "New-Modbus.RS485.RTU.Protocal.Latest.Ver.pdf" (V1.24)
 
-Covered Ranges:
-- 0-124: Basic Settings (On/Off, Power Rate, PF)
-- 3000-3124: Advanced Settings (Time, Export Limit, Battery Control)
+Covers two main ranges:
+1. Basic Settings:    0 - 124   (Pages 9-15)
+2. Advanced Settings: 3000 - 3124 (Pages 35-42) - Critical for XH Battery & Time
 
-Tuple structure:
-(Offset from base index, Length in registers, Scaling factor, Type)
+Tuple structure: (Offset, Length, Scale, Type)
 """
 
-REG_HOLDING_MOD_TL3_XH_MAP = {
-    # =================================================================
-    # GROUP 1: Basic Settings (0-124)
-    # =================================================================
-    
-    # 0: On/Off Switch
-    # 0: Off, 1: On
+# ==============================================================================
+# MAP 1: BASIC SETTINGS (Register 0 - 124)
+# Basis-Adresse für read_block: 0
+# ==============================================================================
+REG_HOLDING_MOD_TL3_XH_BASIC = {
+    # --- System Control ---
+    # Register 0: 0=Off, 1=On
     "OnOff": (0, 1, 1, "uint"),
-
-    # 1: Command (Grid Standard / Country Code)
-    # Value depends on country (e.g., VDE 4105)
+    
+    # Register 1: Grid Standard (e.g. VDE0126)
     "GridStandard": (1, 1, 1, "uint"),
-
-    # 3: Active Power Percentage (0-100%)
+    
+    # --- Power Limits ---
+    # Register 3: Active Power (0-100%)
     "ActivePowerRate": (3, 1, 1, "uint"),
-
-    # 4: Reactive Power Percentage (0-100%)
+    
+    # Register 4: Reactive Power (0-100%)
     "ReactivePowerRate": (4, 1, 1, "uint"),
-
-    # 5: Power Factor (0-10000, 10000 = 1.0)
+    
+    # Register 5: Power Factor (0-10000, 10000=1.0)
     "PowerFactor": (5, 1, 10000, "uint"),
-
-    # 8: PV Voltage High Limit (0.1V)
-    "VpvStart": (8, 1, 10, "uint"),
-
-    # 16: Grid Voltage High Limit (0.1V)
-    "GridVoltHigh": (16, 1, 10, "uint"),
-    # 17: Grid Voltage Low Limit (0.1V)
-    "GridVoltLow": (17, 1, 10, "uint"),
-    # 18: Grid Freq High Limit (0.01Hz)
-    "GridFreqHigh": (18, 1, 100, "uint"),
-    # 19: Grid Freq Low Limit (0.01Hz)
-    "GridFreqLow": (19, 1, 100, "uint"),
-
-    # 88: Modbus Address
-    "ComAddress": (88, 1, 1, "uint"),
+    
+    # --- Grid Protection Settings (Wichtig für Diagnose) ---
+    # Register 17: PV Start Voltage (e.g. 160V)
+    "VpvStart": (17, 1, 10, "uint"),
+    
+    # Register 18-21: Grid Voltage/Freq Limits
+    "GridVoltLow": (18, 1, 10, "uint"),
+    "GridVoltHigh": (19, 1, 10, "uint"),
+    "GridFreqLow": (20, 1, 100, "uint"),
+    "GridFreqHigh": (21, 1, 100, "uint"),
+    
+    # --- Communication ---
+    # Register 30: Modbus Address
+    "ComAddress": (30, 1, 1, "uint"),
+    
+    # --- Restart ---
+    # Register 64: Auto Restart (0=Disable, 1=Enable)
+    "AutoRestart": (64, 1, 1, "uint"),
 }
 
 
-REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {
-    # =================================================================
-    # GROUP 2: Advanced Settings & Identification (3000-3124)
-    # =================================================================
+# ==============================================================================
+# MAP 2: ADVANCED / BATTERY (Register 3000 - 3124)
+# Basis-Adresse für read_block: 3000
+# Alle Offsets sind relativ zu 3000! (z.B. Register 3025 -> Offset 25)
+# ==============================================================================
+REG_HOLDING_MOD_TL3_XH_ADVANCED = {
+    # --- Export Limit Settings ---
+    # Register 3000: Power rate when Export Limit fails
+    "ExportLimitFailedPowerRate": (0, 1, 10, "uint"),
 
-    # 3000: Export Limit Failed Power Rate (0-100%)
-    "ExportLimitFailSafe": (0, 1, 1, "uint"),
-
-    # 3001-3015: Serial Number (ASCII, 30 chars/15 regs)
-    # Note: Offset is relative to 3000 -> 1
+    # --- System Info (New Area for XH) ---
+    # Register 3001-3015: Serial Number (30 Chars ASCII)
     "SerialNumber": (1, 15, 1, "ascii"),
-
-    # 3016-3020: Model Number (ASCII, 10 chars/5 regs)
+    
+    # Register 3016-3020: Model Number (10 Chars ASCII)
     "ModelNumber": (16, 5, 1, "ascii"),
-
-    # 3021-3024: Firmware Version (ASCII, 8 chars/4 regs)
+    
+    # Register 3021-3024: Firmware Version (8 Chars ASCII)
     "FirmwareVersion": (21, 4, 1, "ascii"),
 
     # --- System Time (RTC) ---
-    # 3025: Year (e.g. 2023)
-    "Year": (25, 1, 1, "uint"),
-    # 3026: Month
+    # Register 3025-3030
+    "Year": (25, 1, 1, "uint"),      # 2000-2099
     "Month": (26, 1, 1, "uint"),
-    # 3027: Day
     "Day": (27, 1, 1, "uint"),
-    # 3028: Hour
     "Hour": (28, 1, 1, "uint"),
-    # 3029: Minute
     "Minute": (29, 1, 1, "uint"),
-    # 3030: Second
     "Second": (30, 1, 1, "uint"),
 
-    # --- Export Limit Settings ---
-    # 3038: Export Limit Enable
-    # 0: Disable, 1: Enable
+    # --- General Settings ---
+    # Register 3031: Language
+    "Language": (31, 1, 1, "uint"),
+
+    # --- Export Limit Control ---
+    # Register 3038: Enable (0/1)
     "ExportLimitEnable": (38, 1, 1, "uint"),
-
-    # 3039: Export Limit Power Rate (0-100%)
+    
+    # Register 3039: Rate (0-100%)
     "ExportLimitRate": (39, 1, 1, "uint"),
-
-    # --- Battery / EMS Settings (XH Series) ---
-    # 3047: Charge Power Limit (%)
-    "BatChargePowerLimit": (47, 1, 1, "uint"),
     
-    # 3048: Discharge Power Limit (%)
-    "BatDischargePowerLimit": (48, 1, 1, "uint"),
+    # Register 3040: Fail Safe Enable
+    "ExportLimitFailSafe": (40, 1, 1, "uint"),
 
-    # 3049: AC Charge Enable (Grid Charging)
-    # 0: Disable, 1: Enable
-    "ACChargeEnable": (49, 1, 1, "uint"),
-
-    # 3050-3052: AC Charge Time Slot 1
-    # Format usually: Start Hour, Start Min, End Hour... need specific parsing logic often
-    "ACChargeTime1_StartH": (50, 1, 1, "uint"),
-    "ACChargeTime1_StartM": (51, 1, 1, "uint"),
-    "ACChargeTime1_EndH": (52, 1, 1, "uint"),
+    # --- BATTERY MANAGEMENT (BDC) - WICHTIG! ---
     
-    # 3080: Battery Priority
-    # 0: Load First, 1: Battery First, 2: Grid First
-    "BatPriority": (80, 1, 1, "uint"),
+    # Register 3047: Battery Priority
+    # 0 = Load First (Standard)
+    # 1 = Battery First
+    # 2 = Grid First
+    "BatPriority": (47, 1, 1, "uint"),
+
+    # Register 3049: Max Charge Power %
+    "BatChargePowerLimit": (49, 1, 1, "uint"),
+    
+    # Register 3050: Max Discharge Power %
+    "BatDischargePowerLimit": (50, 1, 1, "uint"),
+
+    # --- AC Charge Settings (Laden aus dem Netz) ---
+    
+    # Register 3070: AC Charge Enable (Globally)
+    "ACChargeEnable": (70, 1, 1, "uint"),
+    
+    # Time Slot 1 (Register 3055-3059)
+    "ACChargeTime1_StartH": (55, 1, 1, "uint"),
+    "ACChargeTime1_StartM": (56, 1, 1, "uint"),
+    "ACChargeTime1_EndH": (57, 1, 1, "uint"),
+    "ACChargeTime1_EndM": (58, 1, 1, "uint"),
+    "ACChargeTime1_Enable": (59, 1, 1, "uint"),
+
+    # Time Slot 2 (Register 3060-3064)
+    "ACChargeTime2_StartH": (60, 1, 1, "uint"),
+    "ACChargeTime2_StartM": (61, 1, 1, "uint"),
+    "ACChargeTime2_EndH": (62, 1, 1, "uint"),
+    "ACChargeTime2_EndM": (63, 1, 1, "uint"),
+    "ACChargeTime2_Enable": (64, 1, 1, "uint"),
+
+    # Time Slot 3 (Register 3065-3069)
+    "ACChargeTime3_StartH": (65, 1, 1, "uint"),
+    "ACChargeTime3_StartM": (66, 1, 1, "uint"),
+    "ACChargeTime3_EndH": (67, 1, 1, "uint"),
+    "ACChargeTime3_EndM": (68, 1, 1, "uint"),
+    "ACChargeTime3_Enable": (69, 1, 1, "uint"),
+    
+    # --- Battery Type ---
+    # Register 3080: 0=Lead-acid, 1=Lithium
+    "BatType": (80, 1, 1, "uint"),
 }
