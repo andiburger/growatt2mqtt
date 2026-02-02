@@ -113,3 +113,14 @@ REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {
     # 0: Load First, 1: Battery First, 2: Grid First
     "BatPriority": (80, 1, 1, "uint"),
 }
+
+# --- Write Mapping (MQTT Topic -> Register Address) ---
+# This defines which registers are writable via MQTT.
+# Based on Protocol V1.24 for MOD-XH (3000 range).
+REG_HOLDING_MOD_TL3_XH_WRITE_MAP = {
+    # Topic Name                  # Register Adresse (Absolut)
+    "BatDischargePowerLimit":     3048,  # Entladeleistung (0-100%)
+    "BatChargePowerLimit":        3047,  # Ladeleistung (0-100%)
+    "ACChargeEnable":             3049,  # AC Ladung (0=Aus, 1=Ein)
+    "OnOff":                      0      # Inverter An/Aus
+}

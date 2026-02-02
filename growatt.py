@@ -104,11 +104,12 @@ except ImportError:
 
 # Holding Registers 
 try:
-    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP
+    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP, REG_HOLDING_MOD_TL3_XH_WRITE_MAP
     from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP
 except ImportError:
     REG_HOLDING_MOD_TL3_XH_MAP = {}
     REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {}
+    REG_HOLDING_MOD_TL3_XH_WRITE_MAP = {}
     logging.warning("Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited.")
 
 try:
@@ -647,10 +648,47 @@ class Growatt:
         Usage Example:
         python growatt2mqtt.py --model TL-XH
         """
+    
+    def write_command(self, command: str, value: int, lock) -> bool:
+        """
+        Write a command to the inverter using Modbus.
+        :param command: The command name to write (must be in write_map)
+        :param value: The value to write to the command's register
+        :param lock: A threading.Lock object to ensure thread-safe access
+        :return: True if successful, False otherwise
+        """
+        if self.model == "MOD-XH" and command not in REG_HOLDING_MOD_TL3_XH_WRITE_MAP:
+            logging.error(f"Unbekannter Befehl für Inverter {self.name}: {command}")
+            return False
+        register = REG_HOLDING_MOD_TL3_XH_WRITE_MAP[command]
+        try:
+            with lock:
+                # Modbus Function Code 06 (Write Single Register)
+                response = self.client.write_register(register, value, unit=self.unit)
+            if response.isError():
+                logging.error(f"Modbus Write Error of CMD {command} (Reg {register}): {response}")
+                return False
+            logging.info(f"{self.name}: CMD '{command}' executed. Register {register} = {value}")
+            return True
+        except Exception as e:
+            logging.error(f"Write exception {command}: {e}")
+            return False
 
-    def read_holding(self):
+    def write_register(self, register, value):
         """
-        Reads Holding Registers (Settings, Serial Number, etc.).
-        Usually starts at 3000 for TL-X series.
+        Write a single holding register.
+        :param register: Register address to write to
+        :param value: Value to write
+        :return: True if successful, False otherwise
         """
-        return {}
+        try:
+            # Function Code 06 (Write Single Register)
+            response = self.client.write_register(register, value, unit=self.unit)
+            if response.isError():
+                logging.error(f"Error writing {register}: {response}")
+                return False
+            logging.info(f"Write success: Register {register} = {value}")
+            return True
+        except Exception as e:
+            logging.error(f"exception writing {register}: {e}")
+            return False
