@@ -1,5 +1,19 @@
- __pycache__
-*.pyc
+# Python 
+__pycache__/
+*.py[cod]
+*.so
+dist/
+build/
+*.egg-info/
+
+# Configs
+config.cfg
+growatt.cfg
+growatt2mqtt.cfg
+.env
+
+# IDE Settings (VS Code / PyCharm)
+.vscode/
+.idea/
 .vscode
 settings.json
-growatt2mqtt.cfg

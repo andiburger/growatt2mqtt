@@ -20,7 +20,7 @@ from paho.mqtt.packettypes import PacketTypes
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 
 # Import our new Inverter class
-from growatt import Growatt
+from .growatt import Growatt
 
 # --- Constants ---
 SETTINGS_READ_INTERVAL_CYCLES = 60  # Read settings every X cycles (e.g. 60 * 10s = 10 Min)
