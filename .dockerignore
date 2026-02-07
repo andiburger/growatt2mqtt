@@ -18,3 +18,14 @@ config.cfg
 growatt.cfg
 growatt2mqtt.cfg
 .env
+
+# local virtual environments
+venv
+env
+.env
+
+# build artefacts
+build
+dist
+*.egg-info
+*.whl

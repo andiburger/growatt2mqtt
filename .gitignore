@@ -17,3 +17,14 @@ growatt2mqtt.cfg
 .idea/
 .vscode
 settings.json
+
+# local virtual environments
+venv
+env
+.env
+
+# build artefacts
+build
+dist
+*.egg-info
+*.whl
