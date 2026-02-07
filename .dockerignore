@@ -1,0 +1,20 @@
+# Git meta data
+.git/
+.github/
+
+# Python Cache & Build artefacts
+__pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
+
+# IDE Settings
+.vscode/
+.idea/
+
+# local config files
+config.cfg
+growatt.cfg
+growatt2mqtt.cfg
+.env

@@ -1,20 +1,68 @@
-# growatt2mqtt
+# growatt2mqtt --- A Python-based Growatt Modbus MQTT Bridge (Read & Write)
 
-Growatt2MQTT is a Python-based service that connects to the Modbus interface (RS485/USB) of Growatt inverters, reads specific registers based on the inverter model, and publishes the collected data to an MQTT broker.
+A Python-based bridge to communicate with Growatt Inverters (specifically **MOD TL3-XH**) via Modbus RS485 and publish data to MQTT. 
 
-**New:** The project has been refactored to support a wide range of inverter series (including Hybrid and Storage systems like SPH, SPA, and TL-XH) through modular register maps.
+Unlike simple monitoring scripts, this project supports **writing to holding registers**, allowing you to control battery limits and AC charging via Home Assistant.
 
 ## Features
 
-- Reads Input Registers (and optionally Holding Registers) via Modbus RTU.
-- **Modular Architecture:** Supports different inverter types by selecting a `protocol_version`.
-- Retrieves PV data, Grid data, Battery status (SOC, power), and BMS information.
-- Configurable via `growatt2mqtt.cfg`.
-- Can run as a Linux Systemd service or inside a Docker container.
+* 📡 **Live Monitoring:** Reads PV power, Grid voltage, Battery status (SOC, Power), and Load consumption.
+* 🎛️ **Control:** Allows writing to registers to control Battery Charge/Discharge limits and AC Charging.
+* 📦 **Modern Packaging:** Easy installation via `pip` or `Docker`.
+* 🏠 **Home Assistant Ready:** Optimized for easy integration with HA automation.
+* 🔧 **MOD TL3-XH Optimized:** Uses the correct register map (3000+ range) for newer firmware versions.
 
-## Configuration (`growatt2mqtt.cfg`)
+---
 
-Configuration is handled via the `growatt2mqtt.cfg` file. You must set the `protocol_version` to match your specific hardware.
+## 🚀 Installation
+
+### Option A: Python Package (Recommended for Raspberry Pi)
+
+You can install the package directly from the source.
+
+```bash
+# 1. Clone repository
+git clone [https://github.com/YOUR_USER/growatt-mqtt-bridge.git](https://github.com/YOUR_USER/growatt-mqtt-bridge.git)
+cd growatt-mqtt-bridge
+
+# Create a virtual environment named 'venv'
+python3 -m venv venv
+
+# Activate the environment
+source venv/bin/activate
+
+# 2. Install package
+pip install .
+
+# 3. Setup configuration
+cp config.cfg.example growatt.cfg
+nano growatt.cfg  # <-- Edit MQTT IP and Serial Port here
+
+# 4. Run
+growatt-run -c growatt.cfg
+```
+
+### Option B: Docker
+
+A Dockerfile is included to run the bridge in an isolated environment.
+
+```bash
+# 1. Build Image
+docker build -t growatt-bridge .
+
+# 2. Run Container
+# Note: You must map the USB device and the config file!
+docker run -d \
+  --name growatt \
+  --restart unless-stopped \
+  --device /dev/ttyUSB0:/dev/ttyUSB0 \
+  -v $(pwd)/growatt.cfg:/config/growatt.cfg \
+  growatt-bridge
+```
+
+
+## ⚙️ Configuration
+Configuration is handled via the growatt2mqtt.cfg file.
 
 ### Example Configuration
 
@@ -28,26 +76,61 @@ offline_interval = 60
 error_interval = 60
 
 [serial]
-# Path to your USB-RS485 adapter
 port = /dev/ttyUSB0
 baudrate = 9600
 
+[mqtt]
+host = 192.168.1.10
+port = 1883
+topic = inverter/growatt
+user = mqtt_user
+password = mqtt_pass
+
 [inverters.main]
 unit = 1
-measurement = inverter
-# IMPORTANT: Select the correct protocol for your device (see table below)
-# Options: TL3X, TL-X, TL-XH, TL-XH-MIN, MAX, MIX, SPH, SPA
+# Important for MOD TL3-XH: Use the XH specific protocol
 protocol_version = TL-XH
+```
 
-[general]
-# Options: DEBUG, INFO, WARNING, ERROR
-log_level = INFO
+## 🏠 Home Assistant Integration
+To control the inverter (e.g., stop battery discharge when your EV is charging), add the following configuration to your configuration.yaml in Home Assistant.
 
-[mqtt]
-host = 192.168.1.100
-port = 1883
-topic = inverter/growatt/solar
-error_topic = inverter/growatt/solar/error
+```yaml
+mqtt:
+  number:
+    # Control Battery Discharge Limit (0-100%)
+    - name: "Growatt Discharge Limit"
+      unique_id: growatt_bat_discharge_limit
+      command_topic: "inverter/control/BatDischargePowerLimit"
+      state_topic: "inverter/growatt/solar/MOD5000TL3-XH"
+      value_template: "{{ value_json.fields.BatDischargePowerLimit }}"
+      min: 0
+      max: 100
+      mode: slider
+      unit_of_measurement: "%"
+
+    # Control Battery Charge Limit (0-100%)
+    - name: "Growatt Charge Limit"
+      unique_id: growatt_bat_charge_limit
+      command_topic: "inverter/control/BatChargePowerLimit"
+      state_topic: "inverter/growatt/solar/MOD5000TL3-XH"
+      value_template: "{{ value_json.fields.BatChargePowerLimit }}"
+      min: 0
+      max: 100
+      mode: slider
+      unit_of_measurement: "%"
+
+  switch:
+    # Enable/Disable AC Charging (Grid Charging)
+    - name: "Growatt AC Charge"
+      unique_id: growatt_ac_charge_enable
+      command_topic: "inverter/control/ACChargeEnable"
+      state_topic: "inverter/growatt/solar/MOD5000TL3-XH"
+      value_template: "{{ value_json.fields.ACChargeEnable }}"
+      payload_on: "1"
+      payload_off: "0"
+      state_on: 1
+      state_off: 0
 ```
 
 ## Supported Inverters (protocol_version)
@@ -69,66 +152,6 @@ Use one of the following shortcodes in your config file to load the correct regi
 
 Note: If you are unsure, start with TL3X for pure PV inverters or TL-XH for modern battery-ready systems.
 
-## Installation
-### Prerequisites
-
-Python 3.x
-
-A USB to RS485 adapter connected to the inverter's Modbus interface.
-
-### Install Dependencies
-```bash
-pip3 install -r requirements.txt
-# Or manually:
-pip3 install pymodbus paho-mqtt configparser
-```
-
-### Run Manually
-```bash
-python3 growatt2mqtt.py
-```
-
-### Run as Linux Service (Systemd)
-
-1. Copy the service file:
-```bash
-sudo cp growatt2mqtt.service /etc/systemd/system/
-```
-
-2. Edit the service file to match your installation path if necessary.
-
-3. Enable and start the service:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable growatt2mqtt.service
-sudo systemctl start growatt2mqtt.service
-```
-
-4. Check status:
-```bash
-systemctl status growatt2mqtt.service
-```
-
-## Run with Docker
-
-1. Build the image:
-```bash
-docker build -t growatt2mqtt .
-```
-2. Run the container (ensure you pass the correct device path):
-```bash
-docker run --device=/dev/ttyUSB0:/dev/ttyUSB0 -v $(pwd)/growatt2mqtt.cfg:/app/growatt2mqtt.cfg growatt2mqtt
-```
-
-## Project Structure
-+ growatt2mqtt.py: Main entry point. Handles config parsing, Modbus connection loop, and MQTT publishing.
-
-+ growatt.py: Inverter logic class. Dynamically imports the correct register map based on the configured model.
-
-+ register_maps/: Directory containing the specific register definitions (e.g., growatt_TLXH_input_reg.py, growatt_SPH_input_reg.py).
-
-+ growatt2mqtt.cfg: User configuration file.
-
 ## Troubleshooting
 If you receive no data or errors:
 
@@ -143,4 +166,4 @@ Currently the code is tested for the following models:
 | Model | Compatibility | Covered Registers |
 | :---------| :--------------------------- | :---------------- |
 | Growatt MOD 5000TL3-XH |  &#x2611; | Input Reg / Holding Reg |
-| Growatt MIC 600TL-X | &#x2612;| to be confirmed |
+| Growatt MIC 600TL-X | &#x2611;| Input Reg / part. Holding Reg |

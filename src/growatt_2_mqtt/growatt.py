@@ -16,8 +16,8 @@ from pymodbus.exceptions import ModbusIOException
 
 # 1. TL-XH Series (Input Registers 3000-3249)
 try:
-    from register_maps.growatt_TLXH_input_reg import REG_INPUT_MAP as MAP_TLXH_3000
-    from register_maps.growatt_TLXH_input_reg import REG_INPUT_BAT_MAP as MAP_TLXH_3000_BAT
+    from .register_maps.growatt_TLXH_input_reg import REG_INPUT_MAP as MAP_TLXH_3000
+    from .register_maps.growatt_TLXH_input_reg import REG_INPUT_BAT_MAP as MAP_TLXH_3000_BAT
 except ImportError:
     MAP_TLXH_3000 = {}
     MAP_TLXH_3000_BAT = {}
@@ -25,8 +25,8 @@ except ImportError:
 
 # 2. Standard/Legacy Series (Input Registers 0-124, 125-249)
 try:
-    from register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_0_MAP as MAP_TL3X_0
-    from register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_125_MAP as MAP_TL3X_125
+    from .register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_0_MAP as MAP_TL3X_0
+    from .register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_125_MAP as MAP_TL3X_125
 except ImportError:
     MAP_TL3X_0 = {}
     MAP_TL3X_125 = {}
@@ -34,9 +34,9 @@ except ImportError:
 
 # 3. MAX 1500V / MAX-X LV Series (Input Registers 0-124, 125-249, 875-999)
 try:
-    from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_MAP as MAP_MAX
-    from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_STRING_MAP as MAP_MAX_STRING
-    from register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_DATA_MAP as MAP_MAX_DATA
+    from .register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_MAP as MAP_MAX
+    from .register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_STRING_MAP as MAP_MAX_STRING
+    from .register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_DATA_MAP as MAP_MAX_DATA
 except ImportError:
     MAP_MAX = {}
     MAP_MAX_STRING = {}
@@ -44,9 +44,9 @@ except ImportError:
     logging.warning("Could not import growatt_MAX_input. MAX series functionality might be limited.")
 
 try:
-    from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_MAP as MAP_TLXH_MIN
-    from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_MAP as MAP_TLXH_MIN_BAT
-    from register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_BDC_MAP as MAP_TLXH_MIN_BAT_BDC
+    from .register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_MAP as MAP_TLXH_MIN
+    from .register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_MAP as MAP_TLXH_MIN_BAT
+    from .register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_BDC_MAP as MAP_TLXH_MIN_BAT_BDC
 except ImportError:
     MAP_TLXH_MIN = {}
     MAP_TLXH_MIN_BAT = {}
@@ -55,8 +55,8 @@ except ImportError:
 
 # 4. Storage / Hybrid Series MIX Type (Input Registers 0-124, 1000-1124)
 try:
-    from register_maps.growatt_storage_mix_input import REG_INPUT_MIX_MAP as MAP_MIX
-    from register_maps.growatt_storage_mix_input import REG_INPUT_MIX_H_MAP as MAP_MIX_H
+    from .register_maps.growatt_storage_mix_input import REG_INPUT_MIX_MAP as MAP_MIX
+    from .register_maps.growatt_storage_mix_input import REG_INPUT_MIX_H_MAP as MAP_MIX_H
 except ImportError:
     MAP_MIX = {}
     MAP_MIX_H = {}
@@ -64,9 +64,9 @@ except ImportError:
 
 # 5. Storage / Hybrid Series SPA Type (Input Registers 1000-1124, 1125-1249, 2000-2124)
 try:
-    from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_MAP as MAP_SPA
-    from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_EXT_BAT_MAP as MAP_SPA_EXT_BAT
-    from register_maps.growatt_storage_spa_input import REG_INPUT_SPA_AC_GRID_MAP as MAP_SPA_AC_GRID
+    from .register_maps.growatt_storage_spa_input import REG_INPUT_SPA_MAP as MAP_SPA
+    from .register_maps.growatt_storage_spa_input import REG_INPUT_SPA_EXT_BAT_MAP as MAP_SPA_EXT_BAT
+    from .register_maps.growatt_storage_spa_input import REG_INPUT_SPA_AC_GRID_MAP as MAP_SPA_AC_GRID
 except ImportError:
     MAP_SPA = {}
     MAP_SPA_EXT_BAT = {}
@@ -75,9 +75,9 @@ except ImportError:
 
 # 6. Storage / Hybrid Series SPH Type (Input Registers 0-124, 1000-1124, 1125-1249)
 try:
-    from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_MAP as MAP_SPH
-    from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_STORAGE_MAP as MAP_SPH_STORAGE
-    from register_maps.growatt_storage_sph_input import REG_INPUT_SPH_EXT_SYS_MAP as MAP_SPH_EXT_SYS
+    from .register_maps.growatt_storage_sph_input import REG_INPUT_SPH_MAP as MAP_SPH
+    from .register_maps.growatt_storage_sph_input import REG_INPUT_SPH_STORAGE_MAP as MAP_SPH_STORAGE
+    from .register_maps.growatt_storage_sph_input import REG_INPUT_SPH_EXT_SYS_MAP as MAP_SPH_EXT_SYS
 except ImportError:
     MAP_SPH = {}
     MAP_SPH_STORAGE = {}
@@ -86,8 +86,8 @@ except ImportError:
 
 # 7. Smart Meter Input Registers (EASTRON, CHINT)
 try:
-    from register_maps.growatt_meter_input import REG_METER_EASTRON_MAP as MAP_EASTRON
-    from register_maps.growatt_meter_input import REG_METER_CHINT_MAP as MAP_CHINT
+    from .register_maps.growatt_meter_input import REG_METER_EASTRON_MAP as MAP_EASTRON
+    from .register_maps.growatt_meter_input import REG_METER_CHINT_MAP as MAP_CHINT
 except ImportError:
     MAP_EASTRON = {}
     MAP_CHINT = {}
@@ -95,8 +95,8 @@ except ImportError:
 
 # 8. MOD TL3-XH Input Registers
 try:
-    from register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_MAP as MAP_MOD_TL3_XH
-    from register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_BAT_MAP as MAP_MOD_TL3_XH_BAT
+    from .register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_MAP as MAP_MOD_TL3_XH
+    from .register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_BAT_MAP as MAP_MOD_TL3_XH_BAT
 except ImportError:
     MAP_MOD_TL3_XH = {}
     MAP_MOD_TL3_XH_BAT = {}
@@ -104,25 +104,26 @@ except ImportError:
 
 # Holding Registers 
 try:
-    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP
-    from register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP
+    from .register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP, REG_HOLDING_MOD_TL3_XH_WRITE_MAP
+    from .register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP
 except ImportError:
     REG_HOLDING_MOD_TL3_XH_MAP = {}
     REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {}
+    REG_HOLDING_MOD_TL3_XH_WRITE_MAP = {}
     logging.warning("Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited.")
 
 try:
-    from register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP
-    from register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP_EXTENDED
+    from .register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP
+    from .register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP_EXTENDED
 except ImportError:
     REG_HOLDING_MAX_MAP = {}
     REG_HOLDING_MAX_MAP_EXTENDED = {}
     logging.warning("Could not import growatt_MAX_holding.")
 
 try:
-    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_MAP
-    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_BAT_MAP
-    from register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_US_MAP
+    from .register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_MAP
+    from .register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_BAT_MAP
+    from .register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_US_MAP
 except ImportError:
     REG_HOLDING_TLXH_MIN_MAP = {}
     REG_HOLDING_TLXH_MIN_BAT_MAP = {}
@@ -130,24 +131,24 @@ except ImportError:
     logging.warning("Could not import growatt_TLXH_min_holding.")
 
 try:
-    from register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_MAP
-    from register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_STORAGE_MAP
+    from .register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_MAP
+    from .register_maps.growatt_storage_mix_holding import REG_HOLDING_MIX_STORAGE_MAP
 except ImportError:
     REG_HOLDING_MIX_MAP = {}
     REG_HOLDING_MIX_STORAGE_MAP = {}
     logging.warning("Could not import growatt_storage_mix_holding.")
 
 try:
-    from register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_MAP
-    from register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_STRAT_CHRG_MAP
+    from .register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_MAP
+    from .register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_STRAT_CHRG_MAP
 except ImportError:
     REG_HOLDING_SPA_MAP = {}
     REG_HOLDING_SPA_STRAT_CHRG_MAP = {}
     logging.warning("Could not import growatt_storage_spa_holding.")
 
 try:
-    from register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_MAP
-    from register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_H_BAT_MAP
+    from .register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_MAP
+    from .register_maps.growatt_storage_sph_holding import REG_HOLDING_SPH_H_BAT_MAP
 except ImportError:
     REG_HOLDING_SPH_MAP = {}
     REG_HOLDING_SPH_H_BAT_MAP = {}
@@ -647,10 +648,47 @@ class Growatt:
         Usage Example:
         python growatt2mqtt.py --model TL-XH
         """
+    
+    def write_command(self, command: str, value: int, lock) -> bool:
+        """
+        Write a command to the inverter using Modbus.
+        :param command: The command name to write (must be in write_map)
+        :param value: The value to write to the command's register
+        :param lock: A threading.Lock object to ensure thread-safe access
+        :return: True if successful, False otherwise
+        """
+        if self.model == "MOD-XH" and command not in REG_HOLDING_MOD_TL3_XH_WRITE_MAP:
+            logging.error(f"Unbekannter Befehl für Inverter {self.name}: {command}")
+            return False
+        register = REG_HOLDING_MOD_TL3_XH_WRITE_MAP[command]
+        try:
+            with lock:
+                # Modbus Function Code 06 (Write Single Register)
+                response = self.client.write_register(register, value, unit=self.unit)
+            if response.isError():
+                logging.error(f"Modbus Write Error of CMD {command} (Reg {register}): {response}")
+                return False
+            logging.info(f"{self.name}: CMD '{command}' executed. Register {register} = {value}")
+            return True
+        except Exception as e:
+            logging.error(f"Write exception {command}: {e}")
+            return False
 
-    def read_holding(self):
+    def write_register(self, register, value):
         """
-        Reads Holding Registers (Settings, Serial Number, etc.).
-        Usually starts at 3000 for TL-X series.
+        Write a single holding register.
+        :param register: Register address to write to
+        :param value: Value to write
+        :return: True if successful, False otherwise
         """
-        return {}
+        try:
+            # Function Code 06 (Write Single Register)
+            response = self.client.write_register(register, value, unit=self.unit)
+            if response.isError():
+                logging.error(f"Error writing {register}: {response}")
+                return False
+            logging.info(f"Write success: Register {register} = {value}")
+            return True
+        except Exception as e:
+            logging.error(f"exception writing {register}: {e}")
+            return False

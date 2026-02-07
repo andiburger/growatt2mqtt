@@ -10,8 +10,9 @@ import json
 import logging
 import sys
 import argparse
+import threading
 from configparser import RawConfigParser
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.properties import Properties
@@ -19,7 +20,7 @@ from paho.mqtt.packettypes import PacketTypes
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 
 # Import our new Inverter class
-from growatt import Growatt
+from .growatt import Growatt
 
 # --- Constants ---
 SETTINGS_READ_INTERVAL_CYCLES = 60  # Read settings every X cycles (e.g. 60 * 10s = 10 Min)
@@ -38,7 +39,9 @@ class GrowattService:
         self.client_modbus = None
         self.client_mqtt = None
         self.mqtt_props = None
-        self.inverters: List[Dict[str, Any]] = [] 
+        self.inverters: List[Dict[str, Any]] = []
+        # threading lock for Modbus access
+        self.modbus_lock = threading.Lock()
         # Logger Setup
         logging.basicConfig(
             level=logging.INFO,
@@ -91,8 +94,12 @@ class GrowattService:
         self.client_mqtt = mqtt.Client()
         self.client_mqtt.on_connect = self._on_mqtt_connect
         self.client_mqtt.on_disconnect = self._on_mqtt_disconnect
+        self.client_mqtt.on_message = self.on_message
         try:
             self.client_mqtt.connect(host, port, 60)
+            topic_control = f"{self.mqtt_topic}/control/#" 
+            self.client_mqtt.subscribe(topic_control)
+            self.log.info(f"subscribe control topics: {topic_control}")
             self.client_mqtt.loop_start()  
             # MQTT v5 Properties (optional, if supported by broker)
             self.mqtt_props = Properties(PacketTypes.PUBLISH)
@@ -109,6 +116,37 @@ class GrowattService:
 
     def _on_mqtt_disconnect(self, client, userdata, rc):
         self.log.warning(f"MQTT disconnected (rc={rc})")
+
+    def on_message(self, client, userdata, msg):
+        """
+        Callback for incoming MQTT messages to control the inverter.
+        Expected topic format: <base_topic>/control/<COMMAND>
+        :param client: MQTT client
+        :param userdata: User data
+        :param msg: MQTT message
+        """
+        try:
+            # 1. Parse incoming message
+            # e.g. inverter/growatt/control/BatDischargePowerLimit -> BatDischargePowerLimit Payload -> value 50
+            command = msg.topic.split("/")[-1]
+            payload_str = msg.payload.decode()
+            try:
+                value = int(float(payload_str))
+            except ValueError:
+                self.log.error(f"Illegal payload for {command}: {payload_str}")
+                return
+
+            self.log.info(f"MQTT received: {command} -> {value}")
+
+            # 2. Send command to inverter
+            if self.inverters:
+                inv_obj = self.inverters[0]['inverter']
+                success = inv_obj.write_command(command, value, self.modbus_lock)
+                if not success:
+                    self.log.warning(f"CM {command} could not be executed.")
+
+        except Exception as e:
+            self.log.error(f"Critical error in on_message: {e}")
 
     def _init_inverters(self):
         """Creates instances of the Growatt class based on config."""
@@ -145,59 +183,58 @@ class GrowattService:
         error_interval = self.settings.getint('time', 'error_interval', fallback=60)
 
         self.log.info("Starting main loop...")
-
         while True:
             any_inverter_online = False
             start_time = time.time()
-
-            for item in self.inverters:
-                inv: Growatt = item['obj']
-                
-                # Check error backoff
-                if item['error_sleep'] > 0:
-                    item['error_sleep'] -= interval
-                    continue
-
-                try:
-                    # 1. Read Live Data
-                    data = inv.update()
+            with self.modbus_lock:
+                for item in self.inverters:
+                    inv: Growatt = item['obj']
                     
-                    if not data:
-                        # No data (Inverter offline or Com error)
+                    # Check error backoff
+                    if item['error_sleep'] > 0:
+                        item['error_sleep'] -= interval
                         continue
-                    
-                    any_inverter_online = True
-                    
-                    # 2. Read Settings / Holding Registers (Interval based)
-                    item['cycles_since_settings'] += 1
-                    if item['cycles_since_settings'] >= SETTINGS_READ_INTERVAL_CYCLES*10:  #every 10 minutes
-                        settings = inv.read_settings()  # The new method from growatt.py
-                        if settings:
-                            self._publish(f"{self.mqtt_topic}/settings", settings, retain=True)
-                            self.log.debug(f"Published settings for {inv.name}")
-                        item['cycles_since_settings'] = 0
 
-                    # 3. Prepare and Send Data
-                    payload = {
-                        'time': int(time.time()),
-                        'measurement': item['measurement'],
-                        'fields': data
-                    }
-                    
-                    self.log.info(f"Data received from {inv.name}: {len(data)} registers")
-                    self.log.debug(f"Payload: {data}")
-                    
-                    self._publish(self.mqtt_topic, payload)
+                    try:
+                        # 1. Read Live Data
+                        data = inv.update()
+                        
+                        if not data:
+                            # No data (Inverter offline or Com error)
+                            continue
+                        
+                        any_inverter_online = True
+                        
+                        # 2. Read Settings / Holding Registers (Interval based)
+                        item['cycles_since_settings'] += 1
+                        if item['cycles_since_settings'] >= SETTINGS_READ_INTERVAL_CYCLES*10:  #every 10 minutes
+                            settings = inv.read_settings()  # The new method from growatt.py
+                            if settings:
+                                self._publish(f"{self.mqtt_topic}/settings", settings, retain=True)
+                                self.log.debug(f"Published settings for {inv.name}")
+                            item['cycles_since_settings'] = 0
 
-                except Exception as e:
-                    self.log.error(f"Error processing inverter {inv.name}: {e}")
-                    # Send Error Payload
-                    error_payload = {
-                        "name": inv.name,
-                        "error": str(e)
-                    }
-                    self._publish(self.mqtt_error_topic, error_payload)
-                    item['error_sleep'] = error_interval
+                        # 3. Prepare and Send Data
+                        payload = {
+                            'time': int(time.time()),
+                            'measurement': item['measurement'],
+                            'fields': data
+                        }
+                        
+                        self.log.info(f"Data received from {inv.name}: {len(data)} registers")
+                        self.log.debug(f"Payload: {data}")
+                        
+                        self._publish(self.mqtt_topic, payload)
+
+                    except Exception as e:
+                        self.log.error(f"Error processing inverter {inv.name}: {e}")
+                        # Send Error Payload
+                        error_payload = {
+                            "name": inv.name,
+                            "error": str(e)
+                        }
+                        self._publish(self.mqtt_error_topic, error_payload)
+                        item['error_sleep'] = error_interval
 
             # Sleep Logic
             sleep_time = interval if any_inverter_online else offline_interval

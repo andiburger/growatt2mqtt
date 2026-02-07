@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "growatt-2-mqtt"
+version = "1.0.0"
+description = "Growatt Modbus to MQTT bridge with control capabilities"
+authors = [
+  { name = "Andreas", email = "andreas.burger@outlook.com" },
+]
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+   "pymodbus>=2.5.3,<3.0.0",
+    "paho-mqtt>=1.6.1",
+    "pyserial>=3.5"
+]
+
+[project.scripts]
+growatt-run = "growatt_2_mqtt.main:main"
