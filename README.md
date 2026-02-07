@@ -166,4 +166,4 @@ Currently the code is tested for the following models:
 | Model | Compatibility | Covered Registers |
 | :---------| :--------------------------- | :---------------- |
 | Growatt MOD 5000TL3-XH |  &#x2611; | Input Reg / Holding Reg |
-| Growatt MIC 600TL-X | &#x2612;| to be confirmed |
+| Growatt MIC 600TL-X | &#x2611;| Input Reg / part. Holding Reg |
