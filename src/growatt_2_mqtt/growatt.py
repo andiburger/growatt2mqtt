@@ -8,7 +8,9 @@ Supports TL-X, TL-XH, and other series via flexible register maps.
 
 import logging
 import struct
-from pymodbus.exceptions import ModbusIOException
+from pymodbus.exceptions import ModbusIOException, ModbusException
+from pymodbus.pdu import ExceptionResponse
+
 
 # --- Import Register Maps ---
 # Ensure these files are located in the same directory.
@@ -358,11 +360,10 @@ class Growatt:
         """
         try:
             if is_input_reg:
-                rr = self.client.read_input_registers(start_reg, length, unit=self.unit)
+                rr = self.client.read_input_registers(start_reg, length, slave=self.unit)
             else:
-                rr = self.client.read_holding_registers(start_reg, length, unit=self.unit)
-
-            if isinstance(rr, ModbusIOException) or rr.isError():
+                rr = self.client.read_holding_registers(start_reg, length, slave=self.unit)
+            if isinstance(rr, (ModbusException, ExceptionResponse)):
                 self.log.error(f"Modbus Error reading block {start_reg}: {rr}")
                 return None
             # Parse raw data using the register map
@@ -664,8 +665,8 @@ class Growatt:
         try:
             with lock:
                 # Modbus Function Code 06 (Write Single Register)
-                response = self.client.write_register(register, value, unit=self.unit)
-            if response.isError():
+                response = self.client.write_register(register, value, slave=self.unit)
+            if isinstance(response, (ModbusException, ExceptionResponse)):
                 logging.error(f"Modbus Write Error of CMD {command} (Reg {register}): {response}")
                 return False
             logging.info(f"{self.name}: CMD '{command}' executed. Register {register} = {value}")
@@ -683,8 +684,8 @@ class Growatt:
         """
         try:
             # Function Code 06 (Write Single Register)
-            response = self.client.write_register(register, value, unit=self.unit)
-            if response.isError():
+            response = self.client.write_register(register, value, slave=self.unit)
+            if isinstance(response, (ModbusException, ExceptionResponse)):
                 logging.error(f"Error writing {register}: {response}")
                 return False
             logging.info(f"Write success: Register {register} = {value}")

@@ -12,7 +12,7 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [
-   "pymodbus>=2.5.3,<3.0.0",
+   "pymodbus>=3.6.0",
     "paho-mqtt>=1.6.1",
     "pyserial>=3.5"
 ]

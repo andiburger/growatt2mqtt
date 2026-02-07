@@ -17,7 +17,7 @@ from typing import List, Dict, Any
 import paho.mqtt.client as mqtt
 from paho.mqtt.properties import Properties
 from paho.mqtt.packettypes import PacketTypes
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from pymodbus.client import ModbusSerialClient
 
 # Import our new Inverter class
 from .growatt import Growatt
@@ -69,8 +69,7 @@ class GrowattService:
         port = self.settings.get('serial', 'port', fallback='/dev/ttyUSB0')
         baud = self.settings.getint('serial', 'baudrate', fallback=9600)
         self.log.info(f"Connecting to Modbus RTU on {port} ({baud} baud)...")
-        self.client_modbus = ModbusClient(
-            method='rtu',
+        self.client_modbus = ModbusSerialClient(
             port=port,
             baudrate=baud,
             stopbits=1,
