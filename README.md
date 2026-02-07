@@ -47,8 +47,8 @@ growatt-run -c growatt.cfg
 A Dockerfile is included to run the bridge in an isolated environment.
 
 ```bash
-# 1. Build Image
-docker build -t growatt-bridge .
+# 1. Pull Image
+docker pull ghcr.io/dein-user/growatt-2-mqtt:latest
 
 # 2. Run Container
 # Note: You must map the USB device and the config file!
@@ -57,7 +57,7 @@ docker run -d \
   --restart unless-stopped \
   --device /dev/ttyUSB0:/dev/ttyUSB0 \
   -v $(pwd)/growatt.cfg:/config/growatt.cfg \
-  growatt-bridge
+  growatt-2-mqtt:latest
 ```
 
 

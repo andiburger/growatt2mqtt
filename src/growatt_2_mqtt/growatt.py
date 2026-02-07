@@ -249,11 +249,14 @@ class Growatt:
         :param name: Name of the inverter (for logging)
         :param unit: Modbus Unit ID (Slave Address)
         :param model: Model variant, e.g., "TL-XH" or "TL3X"
+        :param log: Optional logger (if None, a default logger will be created)
         """
         self.client = client
         self.name = name
         self.unit = unit
         self.model = model
+        self.offline_counter = 0
+        self.is_sleeping = False
         self.log = logging.getLogger(f"Growatt_{name}")
 
     def read_settings(self):
@@ -268,6 +271,12 @@ class Growatt:
             # Block 1: Basic Settings (0-124)
             # is_input_reg=False to read holding registers (Function Code 03)
             block1 = self._read_block(0, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
 
@@ -281,6 +290,12 @@ class Growatt:
             
             # Block 1: 0-99 (Basic settings)
             block1 = self._read_block(0, 100, REG_HOLDING_MAX_MAP, is_input_reg=False)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
 
@@ -294,6 +309,12 @@ class Growatt:
             
             # Block 1: Basic (0-100)
             block1 = self._read_block(0, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
 
@@ -312,6 +333,12 @@ class Growatt:
             
             # Block 1: Basic Inverter Settings (0-100)
             block1 = self._read_block(0, 100, REG_HOLDING_MIX_MAP, is_input_reg=False)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
 
@@ -326,6 +353,12 @@ class Growatt:
             
             # Block 1: Basic Settings (0-100)
             block1 = self._read_block(0, 100, REG_HOLDING_SPA_MAP, is_input_reg=False)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
 
@@ -340,6 +373,12 @@ class Growatt:
             
             # Block 1: Basic Settings (0-100)
             block1 = self._read_block(0, 100, REG_HOLDING_SPH_MAP, is_input_reg=False)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
 
@@ -364,8 +403,19 @@ class Growatt:
             else:
                 rr = self.client.read_holding_registers(start_reg, length, slave=self.unit)
             if isinstance(rr, (ModbusException, ExceptionResponse)):
-                self.log.error(f"Modbus Error reading block {start_reg}: {rr}")
+                self.offline_counter += 1
+                if self.offline_counter < 5:
+                    self.log.warning(f"{self.name}: Modbus Error reading block {start_reg} (Attempt {self.offline_counter}/5): {rr}")
+                elif self.offline_counter == 5:
+                    self.is_sleeping = True
+                    self.log.info(f"{self.name}: Inverter seems to be offline (Night Mode). Suppressing further errors.")
+                else:
+                    self.log.debug(f"{self.name}: Inverter still sleeping... ({rr})")
                 return None
+            if self.offline_counter > 0:
+                self.log.info(f"{self.name}: Inverter is back ONLINE after {self.offline_counter} failed cycles.")
+            self.offline_counter = 0
+            self.is_sleeping = False
             # Parse raw data using the register map
             return self._parse_registers(rr, start_reg, map_ref)
         except Exception as e:
@@ -489,6 +539,12 @@ class Growatt:
         if (self.model == "TL-XH" or self.model == "TL_X") and MAP_TLXH_3000:
             # Block 1: Inverter Data (3000-3124) -> 125 Registers
             block1 = self._read_block(3000, 125, MAP_TLXH_3000, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
             if self.model == "TL-XH":
@@ -501,6 +557,12 @@ class Growatt:
         elif self.model == "TL3X" and MAP_TL3X_0:
             # Block 1: Basic Data (0-124)
             block1 = self._read_block(0, 125, MAP_TL3X_0, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
             # Block 2: String & PID Data (125-249)
@@ -511,6 +573,12 @@ class Growatt:
         elif self.model == "MAX" and MAP_MAX:
             # Block 1: Basic Data (0-124)
             block1 = self._read_block(0, 125, MAP_MAX, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
             # Block 2: String & PID Data (125-249)
@@ -525,6 +593,12 @@ class Growatt:
         elif (self.model == "TL-XH_MIN" or self.model == "TL_X_MIN") and MAP_TLXH_MIN:
             # Block 1: Inverter Data (3000-3124) -> 125 Registers
             block1 = self._read_block(3000, 125, MAP_TLXH_MIN, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
             if self.model == "TL-XH_MIN":
@@ -540,6 +614,12 @@ class Growatt:
         elif self.model == "MIX" and MAP_MIX:
             # Block 1: Basic Inverter Data (0-124)
             block1 = self._read_block(0, 125, MAP_MIX, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
             # Block 2: Storage / Hybrid Data (1000-1124)
@@ -550,6 +630,12 @@ class Growatt:
         elif self.model == "SPA" and MAP_SPA:
             # Block 1: Storage / Hybrid Data (1000-1124)
             block1 = self._read_block(1000, 125, MAP_SPA, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
             # Block 2: Extended Battery Info (1125-1249)
@@ -564,6 +650,12 @@ class Growatt:
         elif self.model == "SPH" and MAP_SPH:
             # Block 1: Basic Inverter Data (0-124)
             block1 = self._read_block(0, 125, MAP_SPH, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
             # Block 2: Storage / Hybrid Data (1000-1124)
@@ -578,17 +670,35 @@ class Growatt:
         elif self.model == "EASTRON" and MAP_EASTRON:
             # Block 1: Meter Data (0-49)
             block1 = self._read_block(0, 50, MAP_EASTRON, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
         elif self.model == "CHINT" and MAP_CHINT:
             # Block 1: Meter Data (0-49)
             block1 = self._read_block(0, 50, MAP_CHINT, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
         # --- Logic for MOD TL3-XH Series ---
         elif self.model == "MOD-XH" and MAP_MOD_TL3_XH:
             # Block 1: MOD TL3-XH Data (3000-3124)
             block1 = self._read_block(3000, 125, MAP_MOD_TL3_XH, is_input_reg=True)
+            if self.is_sleeping:
+                # inverter is likely in night mode/offline, return minimal data to avoid errors
+                return {
+                        "InverterStatus": 0,  # 0 = Waiting / Offline
+                        "StatusText": "Offline/Sleeping"
+                    }
             if block1:
                 data.update(block1)
             # Block 2: Battery/BDC Data (3125-3249)
