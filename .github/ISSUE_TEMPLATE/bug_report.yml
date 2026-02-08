@@ -1,0 +1,59 @@
+name: 🐛 Bug Report
+description: Create a report to help us improve growatt2mqtt
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  
+  - type: input
+    id: version
+    attributes:
+      label: Software Version
+      description: Which version are you using? (e.g. v1.1.0 or Docker latest)
+      placeholder: v1.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation Method
+      options:
+        - Docker (ghcr.io image)
+        - Python Virtual Environment (pip install)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Inverter Model & Hardware
+      description: e.g. Growatt MIC 600TL-X with USB-RS485 Stick on Pi Zero 2W
+      placeholder: MIC 600TL-X
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: The inverter connects but after 5 minutes the connection drops...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log Output
+      description: Please copy and paste relevant logs. IMPORTANT: Remove passwords!
+      render: shell
+      placeholder: |
+        [2026-02-07 14:00:01] INFO - Connecting to Inverter...
+        [2026-02-07 14:00:05] ERROR - Modbus Timeout
+    validations:
+      required: false
