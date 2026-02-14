@@ -775,7 +775,7 @@ class Growatt:
         try:
             with lock:
                 # Modbus Function Code 06 (Write Single Register)
-                response = self.client.write_register(register, value, slave=self.unit)
+                response = self.client.write_register(address=register, value=value, slave=self.unit)
             if isinstance(response, (ModbusException, ExceptionResponse)):
                 logging.error(f"Modbus Write Error of CMD {command} (Reg {register}): {response}")
                 return False
@@ -794,7 +794,7 @@ class Growatt:
         """
         try:
             # Function Code 06 (Write Single Register)
-            response = self.client.write_register(register, value, slave=self.unit)
+            response = self.client.write_register(address=register, value=value, slave=self.unit)
             if isinstance(response, (ModbusException, ExceptionResponse)):
                 logging.error(f"Error writing {register}: {response}")
                 return False
