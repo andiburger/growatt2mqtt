@@ -22,8 +22,8 @@ You can install the package directly from the source.
 
 ```bash
 # 1. Clone repository
-git clone [https://github.com/YOUR_USER/growatt-mqtt-bridge.git](https://github.com/YOUR_USER/growatt-mqtt-bridge.git)
-cd growatt-mqtt-bridge
+git clone [https://github.com/YOUR_USER_NAME/growatt2mqtt.git](https://github.com/YOUR_USER_NAME/growatt2mqtt.git)
+cd growatt2mqtt
 
 # Create a virtual environment named 'venv'
 python3 -m venv venv
@@ -35,7 +35,7 @@ source venv/bin/activate
 pip install .
 
 # 3. Setup configuration
-cp config.cfg.example growatt.cfg
+cp growatt2mqtt.cfg.example growatt.cfg
 nano growatt.cfg  # <-- Edit MQTT IP and Serial Port here
 
 # 4. Run
