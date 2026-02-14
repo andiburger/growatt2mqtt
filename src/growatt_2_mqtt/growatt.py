@@ -399,9 +399,9 @@ class Growatt:
         """
         try:
             if is_input_reg:
-                rr = self.client.read_input_registers(start_reg, length, slave=self.unit)
+                rr = self.client.read_input_registers(start_reg, count=length, slave=self.unit)
             else:
-                rr = self.client.read_holding_registers(start_reg, length, slave=self.unit)
+                rr = self.client.read_holding_registers(start_reg, count=length, slave=self.unit)
             if isinstance(rr, (ModbusException, ExceptionResponse)):
                 self.offline_counter += 1
                 if self.offline_counter < 5:
