@@ -505,14 +505,17 @@ class Growatt:
         """
         # 1. Split Inverter Status (Register 3000 or 0)
         # Low Byte = Status, High Byte = Run Mode
-        if "InverterStatus" in data and self.model == "TL-XH" or self.model == "MOD-XH":
-            print("inverter status processing")
+        if "InverterStatus" in data and self.model in ("TL-XH", "MOD-XH"):
+            self.log.debug("inverter status processing")
             raw = int(data["InverterStatus"])
             status = raw & 0xFF
             mode = (raw >> 8) & 0xFF
+            data["StatusVal"] = INVERTER_WEB_PAGE_STATUS.get(status, f"Unknown ({status})")
             
-            data["StatusVal"] = INVERTER_WEB_PAGE_STATUS[status]
-            data["StatusMode"] = INVERTER_RUN_STATES[mode]
+            if mode == 0 and status == 1:
+                data["StatusMode"] = "Normal (Battery Idle)" 
+            else:
+                data["StatusMode"] = INVERTER_RUN_STATES.get(mode, f"Unknown ({mode})")
         else:
             status = int(data["InverterStatus"])
             data["StatusText"] = STATE_CODES.get(status, f"Unknown({status})")

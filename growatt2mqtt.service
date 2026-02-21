@@ -1,15 +1,33 @@
 [Unit]
-Description=GrowattModbus
-After=network.target
+Description=Growatt MQTT Bridge Service
+# Wait for the network to be fully online (IP address assigned) before starting
+After=network-online.target
+Wants=network-online.target
 
 [Service]
-ExecStart=/usr/bin/python3 -u growatt2mqtt.py
-WorkingDirectory=/home/pi/github/growatt2mqtt
-StandardOutput=inherit
-StandardError=inherit
-Restart=always
-RestartSec=30
+# Service type 'simple' is standard for Python scripts
+Type=simple
+
+# Run as the default 'pi' user
 User=pi
+Group=pi
+
+# Set the working directory so the script can find 'growatt.cfg'
+WorkingDirectory=/home/pi/github/growatt2mqtt
+
+# IMPORTANT: Use the executable from the Virtual Environment (venv)
+# This ensures all installed dependencies (pymodbus, paho-mqtt) are found.
+# The '-c' flag points to the config file relative to the WorkingDirectory.
+ExecStart=/home/pi/github/growatt2mqtt/venv/bin/growatt-run -c growatt.cfg
+
+# Ensure Python logs are output immediately to systemd journal (disable buffering)
+Environment=PYTHONUNBUFFERED=1
+
+# Restart the service automatically if it crashes or is killed
+Restart=always
+# Wait 10 seconds before restarting to prevent rapid restart loops
+RestartSec=10
 
 [Install]
+# Start this service when the system reaches multi-user mode (normal boot)
 WantedBy=multi-user.target

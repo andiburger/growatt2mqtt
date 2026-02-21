@@ -133,6 +133,53 @@ mqtt:
       state_off: 0
 ```
 
+## Setup Auto-Start (Systemd)
+
+To run the script automatically at boot, install the systemd service.
+
+Create the service file or use the template file (growatt2mqtt.service) in the repo:
+```bash
+sudo nano /etc/systemd/system/growatt2mqtt.service
+```
+
+Paste the following configuration:
+
+```Ini, TOML
+[Unit]
+Description=Growatt MQTT Bridge Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/growatt2mqtt
+# Point to the executable INSIDE the virtual environment
+ExecStart=/home/pi/growatt2mqtt/venv/bin/growatt-run -c growatt.cfg
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and Start:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable growatt.service
+sudo systemctl start growatt.service
+```
+Check Status:
+
+```bash
+sudo systemctl status growatt.service
+# View logs:
+journalctl -u growatt.service -f
+```
+
 ## Supported Inverters (protocol_version)
 
 Use one of the following shortcodes in your config file to load the correct register map:
