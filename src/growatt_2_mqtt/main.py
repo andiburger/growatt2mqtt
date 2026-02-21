@@ -189,6 +189,7 @@ class GrowattService:
         interval = self.settings.getint('time', 'interval', fallback=10)
         offline_interval = self.settings.getint('time', 'offline_interval', fallback=60)
         error_interval = self.settings.getint('time', 'error_interval', fallback=60)
+        discovery = self.settings.getboolean('mqtt', 'discovery', fallback=True)
 
         self.log.info("Starting main loop...")
         while True:
@@ -212,8 +213,9 @@ class GrowattService:
                             continue
                         
                         any_inverter_online = True
-                        # Trigger Discovery for Live Data 
-                        self.discovery.publish_discovery(inv.name, inv.model, data.keys(), is_settings=False)
+                        # Trigger Discovery for Live Data
+                        if discovery:
+                            self.discovery.publish_discovery(inv.name, inv.model, data.keys(), is_settings=False)
                         
                         # 2. Read Settings / Holding Registers (Interval based)
                         item['cycles_since_settings'] += 1
