@@ -21,6 +21,8 @@ from pymodbus.client import ModbusSerialClient
 
 # Import our new Inverter class
 from .growatt import Growatt
+# Import Discovery Manager for Home Assistant Auto-Discovery
+from .discovery import HADiscoveryManager
 
 # --- Constants ---
 SETTINGS_READ_INTERVAL_CYCLES = 60  # Read settings every X cycles (e.g. 60 * 10s = 10 Min)
@@ -94,6 +96,7 @@ class GrowattService:
         self.client_mqtt.on_connect = self._on_mqtt_connect
         self.client_mqtt.on_disconnect = self._on_mqtt_disconnect
         self.client_mqtt.on_message = self.on_message
+        self.discovery = HADiscoveryManager(self.client_mqtt, self.mqtt_topic)
         try:
             self.client_mqtt.connect(host, port, 60)
             topic_control = f"{self.mqtt_topic}/control/#" 
@@ -110,6 +113,8 @@ class GrowattService:
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         if rc == 0:
             self.log.info("MQTT connected successfully.")
+            # --- NEW: Subscribe to Home Assistant status ---
+            self.client_mqtt.subscribe("homeassistant/status")
         else:
             self.log.error(f"MQTT connection failed with code {rc}")
 
@@ -124,6 +129,10 @@ class GrowattService:
         :param userdata: User data
         :param msg: MQTT message
         """
+        if msg.topic == "homeassistant/status":
+            status = msg.payload.decode('utf-8').lower()
+            self.discovery.set_ha_status(status)
+            return
         try:
             # 1. Parse incoming message
             # e.g. inverter/growatt/control/BatDischargePowerLimit -> BatDischargePowerLimit Payload -> value 50
@@ -203,6 +212,8 @@ class GrowattService:
                             continue
                         
                         any_inverter_online = True
+                        # Trigger Discovery for Live Data 
+                        self.discovery.publish_discovery(inv.name, inv.model, data.keys(), is_settings=False)
                         
                         # 2. Read Settings / Holding Registers (Interval based)
                         item['cycles_since_settings'] += 1
