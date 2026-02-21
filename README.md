@@ -8,10 +8,10 @@ Unlike simple monitoring scripts, this project supports **writing to holding reg
 
 * 📡 **Live Monitoring:** Reads PV power, Grid voltage, Battery status (SOC, Power), and Load consumption.
 * 🎛️ **Control:** Allows writing to registers to control Battery Charge/Discharge limits and AC Charging.
-* 📦 **Modern Packaging:** Easy installation via `pip` or `Docker`.
-* 🏠 **Home Assistant Ready:** Optimized for easy integration with HA automation.
+* 🪄 **MQTT Auto-Discovery:** Seamless Plug & Play integration with Home Assistant (no manual YAML configuration required!).
+* 📦 **Modern Packaging:** Easy installation via `pip`, systemd service, or `Docker`.
+* 🏠 **Home Assistant Ready:** Optimized for easy integration with HA automation and the HA Energy Dashboard.
 * 🔧 **MOD TL3-XH Optimized:** Uses the correct register map (3000+ range) for newer firmware versions.
-
 ---
 
 ## 🚀 Installation
@@ -85,6 +85,8 @@ port = 1883
 topic = inverter/growatt
 user = mqtt_user
 password = mqtt_pass
+# Enable Home Assistant MQTT Auto-Discovery (true/false)
+discovery = true
 
 [inverters.main]
 unit = 1
@@ -93,7 +95,23 @@ protocol_version = TL-XH
 ```
 
 ## 🏠 Home Assistant Integration
-To control the inverter (e.g., stop battery discharge when your EV is charging), add the following configuration to your configuration.yaml in Home Assistant.
+### Method 1: MQTT Auto-Discovery (Recommended & Easiest)
+
+By default, the bridge uses Home Assistant's MQTT Auto-Discovery feature. Ensure discovery = true is set in your growatt.cfg.
+
+Once the bridge connects to your MQTT broker and Home Assistant is online, your inverter will automatically appear as a new Device in Home Assistant under Settings -> Devices & Services -> MQTT.
+
+All sensors are automatically created and grouped under the inverter device.
+
+Device classes (Power, Energy, Voltage) and state classes are automatically assigned.
+
+You can instantly add the energy sensors (like E_Today) to your Home Assistant Energy Dashboard.
+
+Migrating from an older version?
+If you update to this version and already have manual YAML sensors configured, you will see duplicated sensors. To prevent this, either delete your old YAML sensors or disable auto-discovery by setting discovery = false in your config.
+
+### Method 2: Manual Configuration (Legacy / Advanced)
+If you prefer to define your sensors manually or have auto-discovery disabled, you can add them to your Home Assistant configuration.yaml file manually:
 
 ```yaml
 mqtt:
@@ -132,6 +150,60 @@ mqtt:
       state_on: 1
       state_off: 0
 ```
+
+## ✍️ Controlling the Inverter (Writing Holding Registers)
+You can change the inverter's settings by publishing JSON messages to the /set topic. For example, to change the maximum grid feed-in power:
+
+Topic: inverter/growatt/set
+### Payload:
+```JSON
+{
+  "command": "MaxPower",
+  "value": 5000
+}
+```
+Available commands depend on your register map (e.g., MaxPower, ChargePower, DischargePower).
+
+## 🛠 Simulated Environment (For Developers)
+If you want to develop, test, or build dashboards while the sun is down (and your real inverter is offline), you can use the built-in Modbus simulator. It creates a virtual serial tunnel and feeds realistic, fluctuating data to the bridge.
+
+### How it works:
+```plaintext
+[ growatt2mqtt ] <---> (/dev/pts/1) [ socat tunnel ] (/dev/pts/2) <---> [ simulator.py ]
+```
+1. Start the Virtual Tunnel
+
+Run the included helper script to create a virtual serial connection. It will automatically check your OS and give you the correct paths.
+```bash
+python3 tools/start_socat.py
+```
+Leave this terminal open. It will output two ports (e.g., Port 1: /dev/pts/1 and Port 2: /dev/pts/2).
+
+2. Start the Simulator
+
+Open a second terminal and start the simulator using Port 2. You can choose the inverter profile that matches your setup.
+```bash
+# For String Inverters (TL-X, MIC, MIN)
+python3 tools/simulator.py /dev/pts/2 --profile mic600
+
+# For Hybrid Inverters (MOD TL3-XH)
+python3 tools/simulator.py /dev/pts/2 --profile tlxh
+
+# Add --debug to see the raw Modbus hex traffic
+```
+3. Connect the Bridge
+
+Open a third terminal. Edit your growatt.cfg and change the serial port to Port 1:
+```ini, TOML
+[serial]
+port = /dev/pts/1
+baudrate = 9600
+```
+Then, start the bridge normally:
+```bash
+growatt-run -c growatt.cfg
+```
+You should now see simulated data (sine waves for power/voltage) arriving in your MQTT broker!
 
 ## Setup Auto-Start (Systemd)
 
