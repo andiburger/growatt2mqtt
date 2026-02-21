@@ -11,6 +11,13 @@ class HADiscoveryManager:
     Guesses sensor types based on their register names to make it plug & play.
     """
     def __init__(self, mqtt_client, base_topic):
+        """
+        Docstring for __init__
+        
+        :param self: Description
+        :param mqtt_client: Description
+        :param base_topic: Description
+        """
         self.mqtt = mqtt_client
         self.base_topic = base_topic
         self.ha_status = "offline"
@@ -18,7 +25,8 @@ class HADiscoveryManager:
         self.published_components = set()
 
     def set_ha_status(self, status):
-        """Called when Home Assistant sends its online/offline status."""
+        """Called when Home Assistant sends its online/offline status.
+        :param status: 'online' or 'offline'"""
         status = status.lower()
         if status != self.ha_status:
             log.info(f"Home Assistant status changed to: {status}")
@@ -30,6 +38,7 @@ class HADiscoveryManager:
     def _guess_sensor_properties(self, key):
         """
         Infers the unit, device class, and state class from the sensor's name.
+        :param key: The name of the sensor (e.g. 'Pac', 'Vpv1', 'FaultCode')
         :return: tuple (unit_of_measurement, device_class, state_class)
         """
         key_upper = key.upper()
