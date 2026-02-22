@@ -70,20 +70,24 @@ class HADiscoveryManager:
 
     def publish_discovery(self, inverter_name, model, sensor_keys, is_settings=False):
         """
-        Publishes the MQTT discovery config for a list of sensors.
-        :param sensor_keys: List of dictionary keys (e.g. ['Pac', 'Vpv1'])
-        :param is_settings: True if these are holding registers (different topic)
+        Publishes HA Auto-Discovery config. 
+        Differentiates between live sensors (read-only) and settings (read/write),
+        which are created as interactive switches or number sliders in Home Assistant.
+        :param inverter_name: Name of the inverter
+        :param model: Model of the inverter
+        :param sensor_keys: List of sensor keys to publish
+        :param is_settings: If True, creates interactive components (switches/sliders) for settings; otherwise, creates read-only sensors for live data.
         """
+        # If set to offline, we just silently return (no logging)
         if self.ha_status != "online":
             return
-        
-        # Create a unique cache key so we only publish once per type and inverter
+            
+        # Prevent spamming the MQTT broker if already published
         cache_key = f"{inverter_name}_{'settings' if is_settings else 'live'}"
         if cache_key in self.published_components:
             return
             
         log.info(f"Publishing HA Auto-Discovery for '{inverter_name}' ({'Settings' if is_settings else 'Live Data'})...")
-        
         safe_name = inverter_name.replace(" ", "_").lower()
         
         # Device information to group all sensors under one device in HA
@@ -96,35 +100,91 @@ class HADiscoveryManager:
         
         count = 0
         for key in sensor_keys:
-            unit, dev_class, state_class = self._guess_sensor_properties(key)
+            payload = {}
+            component = "sensor"  # Default to read-only sensor
             
-            # Determine correct state topic and value template
+            # ==========================================
+            # CASE 1: HOLDING REGISTERS (WRITABLE)
+            # ==========================================
             if is_settings:
-                # Settings are published directly as a flat JSON map
                 state_topic = f"{self.base_topic}/settings"
-                val_template = f"{{{{ value_json.{key} }}}}"
+                
+                # A: Is it a switch? (e.g., "ACChargeEnable" or "OnOff")
+                if any(x in key.upper() for x in ["ENABLE", "ONOFF"]):
+                    component = "switch"
+                    
+                    # HA expects ON/OFF states for switches, but Modbus uses 1/0
+                    val_template = f"{{% if value_json.{key} == 1 %}}ON{{% else %}}OFF{{% endif %}}"
+                    
+                    payload = {
+                        "name": f"{inverter_name} {key}",
+                        "unique_id": f"growatt_{safe_name}_{key.lower()}",
+                        "state_topic": state_topic,
+                        "value_template": val_template,
+                        # The topic where HA sends the command
+                        "command_topic": f"{self.base_topic}/set",
+                        # Translate HA's "ON/OFF" back into our custom JSON command format
+                        "command_template": f'{{"command": "{key}", "value": {{% if value == "ON" %}}1{{% else %}}0{{% endif %}} }}',
+                        "device": device_info
+                    }
+                
+                # B: Is it a number / slider? (e.g., Power limits or percentages)
+                else:
+                    component = "number"
+                    val_template = f"{{{{ value_json.{key} }}}}"
+                    
+                    payload = {
+                        "name": f"{inverter_name} {key}",
+                        "unique_id": f"growatt_{safe_name}_{key.lower()}",
+                        "state_topic": state_topic,
+                        "value_template": val_template,
+                        "command_topic": f"{self.base_topic}/set",
+                        # Send the new slider value as a JSON command
+                        "command_template": f'{{"command": "{key}", "value": {{{{ value }}}} }}',
+                        "device": device_info
+                    }
+                    
+                    # Set smart limits for specific sliders to prevent invalid Modbus writes
+                    if "Rate" in key or "Limit" in key:
+                        payload["min"] = 0
+                        payload["max"] = 100
+                    elif "Time" in key or "Hour" in key:
+                        payload["min"] = 0
+                        payload["max"] = 23
+                    elif "Min" in key:
+                        payload["min"] = 0
+                        payload["max"] = 59
+            
+            # ==========================================
+            # CASE 2: INPUT REGISTERS (READ-ONLY)
+            # ==========================================
             else:
-                # Live data is published inside the 'fields' dictionary
+                component = "sensor"
                 state_topic = self.base_topic
                 val_template = f"{{{{ value_json.fields.{key} }}}}"
+                
+                # Guess units and HA classes based on the sensor name
+                unit, dev_class, state_class = self._guess_sensor_properties(key)
+                
+                payload = {
+                    "name": f"{inverter_name} {key}",
+                    "unique_id": f"growatt_{safe_name}_{key.lower()}",
+                    "state_topic": state_topic,
+                    "value_template": val_template,
+                    "device": device_info
+                }
+                
+                # Only append attributes if they were successfully guessed
+                if unit: payload["unit_of_measurement"] = unit
+                if dev_class: payload["device_class"] = dev_class
+                if state_class: payload["state_class"] = state_class
 
-            payload = {
-                "name": f"{inverter_name} {key}",
-                "unique_id": f"growatt_{safe_name}_{key.lower()}",
-                "state_topic": state_topic,
-                "value_template": val_template,
-                "device": device_info
-            }
-            
-            # Only add attributes if they exist
-            if unit: payload["unit_of_measurement"] = unit
-            if dev_class: payload["device_class"] = dev_class
-            if state_class: payload["state_class"] = state_class
-            
-            # Publish to standard Home Assistant discovery topic
-            config_topic = f"homeassistant/sensor/{safe_name}/{key.lower()}/config"
+            # ==========================================
+            # PUBLISH TO HOME ASSISTANT
+            # ==========================================
+            config_topic = f"homeassistant/{component}/{safe_name}/{key.lower()}/config"
             self.mqtt.publish(config_topic, json.dumps(payload), retain=True)
             count += 1
             
         self.published_components.add(cache_key)
-        log.info(f"Successfully published {count} discovery sensors for '{inverter_name}'.")
+        log.info(f"Successfully published {count} discovery {component}s for '{inverter_name}'.")
