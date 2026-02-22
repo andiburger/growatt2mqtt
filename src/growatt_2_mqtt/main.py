@@ -207,6 +207,7 @@ class GrowattService:
                     try:
                         # 1. Read Live Data
                         data = inv.update()
+                        item['cycles_since_settings'] += 1
                         
                         if not data:
                             # No data (Inverter offline or Com error)
@@ -218,8 +219,7 @@ class GrowattService:
                             self.discovery.publish_discovery(inv.name, inv.model, data.keys(), is_settings=False)
                         
                         # 2. Read Settings / Holding Registers (Interval based)
-                        item['cycles_since_settings'] += 1
-                        if item['cycles_since_settings'] >= SETTINGS_READ_INTERVAL_CYCLES*10:  #every 10 minutes
+                        if item['cycles_since_settings'] >= SETTINGS_READ_INTERVAL_CYCLES:  #every 10 minutes
                             settings = inv.read_settings()  # The new method from growatt.py
                             if settings:
                                 self._publish(f"{self.mqtt_topic}/settings", settings, retain=True)
