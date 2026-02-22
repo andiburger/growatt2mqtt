@@ -25,7 +25,7 @@ from .growatt import Growatt
 from .discovery import HADiscoveryManager
 
 # --- Constants ---
-SETTINGS_READ_INTERVAL_CYCLES = 60  # Read settings every X cycles (e.g. 60 * 10s = 10 Min)
+SETTINGS_READ_INTERVAL_CYCLES = 600  # Read settings every X cycles (e.g. 600 * 10s = 10 Min)
 DEFAULT_CONFIG_PATH = 'growatt2mqtt.cfg'
 
 
