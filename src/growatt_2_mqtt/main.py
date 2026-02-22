@@ -25,7 +25,6 @@ from .growatt import Growatt
 from .discovery import HADiscoveryManager
 
 # --- Constants ---
-SETTINGS_READ_INTERVAL_CYCLES = 600  # Read settings every X cycles (e.g. 600 * 10s = 10 Min)
 DEFAULT_CONFIG_PATH = 'growatt2mqtt.cfg'
 
 
@@ -63,6 +62,9 @@ class GrowattService:
         self.settings.read(self.config_path)
         # Set Log Level
         log_level_str = self.settings.get('general', 'log_level', fallback='INFO').upper()
+        self.settings_interval = 600 # Default
+        if self.settings.has_section('time') and self.settings.has_option('time', 'settings_interval'):
+            self.settings_interval = self.settings.getint('time', 'settings_interval')
         self.log.setLevel(logging.getLevelName(log_level_str))
         self.log.info(f"Configuration loaded from {self.config_path}")
 
@@ -219,7 +221,7 @@ class GrowattService:
                             self.discovery.publish_discovery(inv.name, inv.model, data.keys(), is_settings=False)
                         
                         # 2. Read Settings / Holding Registers (Interval based)
-                        if item['cycles_since_settings'] >= SETTINGS_READ_INTERVAL_CYCLES:  #every 10 minutes
+                        if item['cycles_since_settings'] >= self.settings_interval:  #every 2h
                             settings = inv.read_settings()  # The new method from growatt.py
                             if settings:
                                 self._publish(f"{self.mqtt_topic}/settings", settings, retain=True)

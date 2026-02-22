@@ -1,6 +1,8 @@
 [time]
 # Frequency of live data updates (Watts, Volts, Amps)
 interval = 10
+# Frequency of inverter settings updates
+settings_interval = 600
 # Frequency of updates when inverter reports 0W (night time)
 offline_interval = 60
 # Wait time after a Modbus timeout or connection error
