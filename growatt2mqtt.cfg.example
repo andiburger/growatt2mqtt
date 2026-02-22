@@ -20,6 +20,8 @@ host = 192.168.1.100
 port = 1883
 topic = house/solar
 error_topic = house/solar/error
+# Enable Home Assistant MQTT Auto-Discovery (true/false)
+discovery = true
 
 # -------------------------------------------------------------------
 # INVERTER EXAMPLES (Choose the one matching your hardware)
