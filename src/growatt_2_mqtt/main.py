@@ -224,6 +224,9 @@ class GrowattService:
                             if settings:
                                 self._publish(f"{self.mqtt_topic}/settings", settings, retain=True)
                                 self.log.debug(f"Published settings for {inv.name}")
+                                if discovery:
+                                    self.discovery.publish_discovery(inv.name, inv.model, settings.keys(), is_settings=True)
+                                    self.log.debug(f"Published discovery for {inv.name}")
                             item['cycles_since_settings'] = 0
 
                         # 3. Prepare and Send Data
