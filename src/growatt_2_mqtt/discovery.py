@@ -182,6 +182,8 @@ class HADiscoveryManager:
             # ==========================================
             # PUBLISH TO HOME ASSISTANT
             # ==========================================
+            # --- Tell Home Assistant to monitor our LWT topic ---
+            payload["availability_topic"] = f"{self.base_topic}/availability"
             config_topic = f"homeassistant/{component}/{safe_name}/{key.lower()}/config"
             self.mqtt.publish(config_topic, json.dumps(payload), retain=True)
             count += 1
