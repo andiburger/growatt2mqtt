@@ -20,7 +20,7 @@ class HADiscoveryManager:
         """
         self.mqtt = mqtt_client
         self.base_topic = base_topic
-        self.ha_status = "offline"
+        self.ha_status = "online"  # Assume HA is online at start (it will correct us if not)
         # Keeps track of published components to avoid spamming the broker
         self.published_components = set()
 
