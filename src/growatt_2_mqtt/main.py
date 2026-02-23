@@ -98,6 +98,10 @@ class GrowattService:
         self.client_mqtt.on_connect = self._on_mqtt_connect
         self.client_mqtt.on_disconnect = self._on_mqtt_disconnect
         self.client_mqtt.on_message = self.on_message
+        # Set Last Will and Testament (LWT) for availability
+        availability_topic = f"{self.mqtt_topic}/availability"
+        # If the script crashes, the broker will publish 'offline' here
+        self.client_mqtt.will_set(availability_topic, payload="offline", qos=0, retain=True)
         self.discovery = HADiscoveryManager(self.client_mqtt, self.mqtt_topic)
         try:
             self.client_mqtt.connect(host, port, 60)
@@ -115,8 +119,11 @@ class GrowattService:
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         if rc == 0:
             self.log.info("MQTT connected successfully.")
-            # --- NEW: Subscribe to Home Assistant status ---
+            # --- Subscribe to Home Assistant status ---
             self.client_mqtt.subscribe("homeassistant/status")
+            # --- Publish 'online' status to availability topic ---
+            availability_topic = f"{self.mqtt_topic}/availability"
+            self.client_mqtt.publish(availability_topic, payload="online", qos=0, retain=True)
         else:
             self.log.error(f"MQTT connection failed with code {rc}")
 
