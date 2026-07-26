@@ -11,7 +11,6 @@ import struct
 from pymodbus.exceptions import ModbusIOException, ModbusException
 from pymodbus.pdu import ExceptionResponse
 
-
 # --- Import Register Maps ---
 # Ensure these files are located in the same directory.
 # We use try-except to prevent crashes if a map file is missing.
@@ -19,72 +18,116 @@ from pymodbus.pdu import ExceptionResponse
 # 1. TL-XH Series (Input Registers 3000-3249)
 try:
     from .register_maps.growatt_TLXH_input_reg import REG_INPUT_MAP as MAP_TLXH_3000
-    from .register_maps.growatt_TLXH_input_reg import REG_INPUT_BAT_MAP as MAP_TLXH_3000_BAT
+    from .register_maps.growatt_TLXH_input_reg import (
+        REG_INPUT_BAT_MAP as MAP_TLXH_3000_BAT,
+    )
 except ImportError:
     MAP_TLXH_3000 = {}
     MAP_TLXH_3000_BAT = {}
-    logging.warning("Could not import growatt_input_3000. TL-XH functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_input_3000. TL-XH functionality might be limited."
+    )
 
 # 2. Standard/Legacy Series (Input Registers 0-124, 125-249)
 try:
-    from .register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_0_MAP as MAP_TL3X_0
-    from .register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import REG_INPUT_125_MAP as MAP_TL3X_125
+    from .register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import (
+        REG_INPUT_0_MAP as MAP_TL3X_0,
+    )
+    from .register_maps.growatt_TL3X_MAX_MID_MAC_MIC_input_reg import (
+        REG_INPUT_125_MAP as MAP_TL3X_125,
+    )
 except ImportError:
     MAP_TL3X_0 = {}
     MAP_TL3X_125 = {}
-    logging.warning("Could not import growatt_input_0. Standard/Legacy functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_input_0. Standard/Legacy functionality might be limited."
+    )
 
 # 3. MAX 1500V / MAX-X LV Series (Input Registers 0-124, 125-249, 875-999)
 try:
     from .register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_MAP as MAP_MAX
-    from .register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_STRING_MAP as MAP_MAX_STRING
-    from .register_maps.growatt_MAX_input_reg import REG_INPUT_MAX_DATA_MAP as MAP_MAX_DATA
+    from .register_maps.growatt_MAX_input_reg import (
+        REG_INPUT_MAX_STRING_MAP as MAP_MAX_STRING,
+    )
+    from .register_maps.growatt_MAX_input_reg import (
+        REG_INPUT_MAX_DATA_MAP as MAP_MAX_DATA,
+    )
 except ImportError:
     MAP_MAX = {}
     MAP_MAX_STRING = {}
     MAP_MAX_DATA = {}
-    logging.warning("Could not import growatt_MAX_input. MAX series functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_MAX_input. MAX series functionality might be limited."
+    )
 
 try:
-    from .register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_MAP as MAP_TLXH_MIN
-    from .register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_MAP as MAP_TLXH_MIN_BAT
-    from .register_maps.growatt_TLXH_min_input import REG_INPUT_TLXH_MIN_BAT_BDC_MAP as MAP_TLXH_MIN_BAT_BDC
+    from .register_maps.growatt_TLXH_min_input import (
+        REG_INPUT_TLXH_MIN_MAP as MAP_TLXH_MIN,
+    )
+    from .register_maps.growatt_TLXH_min_input import (
+        REG_INPUT_TLXH_MIN_BAT_MAP as MAP_TLXH_MIN_BAT,
+    )
+    from .register_maps.growatt_TLXH_min_input import (
+        REG_INPUT_TLXH_MIN_BAT_BDC_MAP as MAP_TLXH_MIN_BAT_BDC,
+    )
+    from .register_maps.growatt_TLXH_min_input import (
+        REG_INPUT_APX_BDC_MAP as MAP_TLXH_MIN_APX_BDC,
+    )
 except ImportError:
     MAP_TLXH_MIN = {}
     MAP_TLXH_MIN_BAT = {}
     MAP_TLXH_MIN_BAT_BDC = {}
-    logging.warning("Could not import growatt_TLXH_min_input. TL-XH MIN functionality might be limited.")
+    MAP_TLXH_MIN_APX_BDC = {}
+    logging.warning(
+        "Could not import growatt_TLXH_min_input. TL-XH MIN functionality might be limited."
+    )
 
 # 4. Storage / Hybrid Series MIX Type (Input Registers 0-124, 1000-1124)
 try:
     from .register_maps.growatt_storage_mix_input import REG_INPUT_MIX_MAP as MAP_MIX
-    from .register_maps.growatt_storage_mix_input import REG_INPUT_MIX_H_MAP as MAP_MIX_H
+    from .register_maps.growatt_storage_mix_input import (
+        REG_INPUT_MIX_H_MAP as MAP_MIX_H,
+    )
 except ImportError:
     MAP_MIX = {}
     MAP_MIX_H = {}
-    logging.warning("Could not import growatt_storage_mix_input. Storage MIX functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_storage_mix_input. Storage MIX functionality might be limited."
+    )
 
 # 5. Storage / Hybrid Series SPA Type (Input Registers 1000-1124, 1125-1249, 2000-2124)
 try:
     from .register_maps.growatt_storage_spa_input import REG_INPUT_SPA_MAP as MAP_SPA
-    from .register_maps.growatt_storage_spa_input import REG_INPUT_SPA_EXT_BAT_MAP as MAP_SPA_EXT_BAT
-    from .register_maps.growatt_storage_spa_input import REG_INPUT_SPA_AC_GRID_MAP as MAP_SPA_AC_GRID
+    from .register_maps.growatt_storage_spa_input import (
+        REG_INPUT_SPA_EXT_BAT_MAP as MAP_SPA_EXT_BAT,
+    )
+    from .register_maps.growatt_storage_spa_input import (
+        REG_INPUT_SPA_AC_GRID_MAP as MAP_SPA_AC_GRID,
+    )
 except ImportError:
     MAP_SPA = {}
     MAP_SPA_EXT_BAT = {}
     MAP_SPA_AC_GRID = {}
-    logging.warning("Could not import growatt_storage_spa_input. Storage SPA functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_storage_spa_input. Storage SPA functionality might be limited."
+    )
 
 # 6. Storage / Hybrid Series SPH Type (Input Registers 0-124, 1000-1124, 1125-1249)
 try:
     from .register_maps.growatt_storage_sph_input import REG_INPUT_SPH_MAP as MAP_SPH
-    from .register_maps.growatt_storage_sph_input import REG_INPUT_SPH_STORAGE_MAP as MAP_SPH_STORAGE
-    from .register_maps.growatt_storage_sph_input import REG_INPUT_SPH_EXT_SYS_MAP as MAP_SPH_EXT_SYS
+    from .register_maps.growatt_storage_sph_input import (
+        REG_INPUT_SPH_STORAGE_MAP as MAP_SPH_STORAGE,
+    )
+    from .register_maps.growatt_storage_sph_input import (
+        REG_INPUT_SPH_EXT_SYS_MAP as MAP_SPH_EXT_SYS,
+    )
 except ImportError:
     MAP_SPH = {}
     MAP_SPH_STORAGE = {}
     MAP_SPH_EXT_SYS = {}
-    logging.warning("Could not import growatt_storage_sph_input. Storage SPH functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_storage_sph_input. Storage SPH functionality might be limited."
+    )
 
 # 7. Smart Meter Input Registers (EASTRON, CHINT)
 try:
@@ -93,26 +136,41 @@ try:
 except ImportError:
     MAP_EASTRON = {}
     MAP_CHINT = {}
-    logging.warning("Could not import growatt_meter_input. Smart Meter functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_meter_input. Smart Meter functionality might be limited."
+    )
 
 # 8. MOD TL3-XH Input Registers
 try:
-    from .register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_MAP as MAP_MOD_TL3_XH
-    from .register_maps.growatt_MOD_TL3_XH_input import REG_INPUT_MOD_TL3_XH_BAT_MAP as MAP_MOD_TL3_XH_BAT
+    from .register_maps.growatt_MOD_TL3_XH_input import (
+        REG_INPUT_MOD_TL3_XH_MAP as MAP_MOD_TL3_XH,
+    )
+    from .register_maps.growatt_MOD_TL3_XH_input import (
+        REG_INPUT_MOD_TL3_XH_BAT_MAP as MAP_MOD_TL3_XH_BAT,
+    )
 except ImportError:
     MAP_MOD_TL3_XH = {}
     MAP_MOD_TL3_XH_BAT = {}
-    logging.warning("Could not import growatt_MOD_TL3_XH_input. MOD TL3-XH functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_MOD_TL3_XH_input. MOD TL3-XH functionality might be limited."
+    )
 
-# Holding Registers 
+# Holding Registers
 try:
-    from .register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_MAP, REG_HOLDING_MOD_TL3_XH_WRITE_MAP
-    from .register_maps.growatt_MOD_TL3_XH_holding import REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP
+    from .register_maps.growatt_MOD_TL3_XH_holding import (
+        REG_HOLDING_MOD_TL3_XH_MAP,
+        REG_HOLDING_MOD_TL3_XH_WRITE_MAP,
+    )
+    from .register_maps.growatt_MOD_TL3_XH_holding import (
+        REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP,
+    )
 except ImportError:
     REG_HOLDING_MOD_TL3_XH_MAP = {}
     REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP = {}
     REG_HOLDING_MOD_TL3_XH_WRITE_MAP = {}
-    logging.warning("Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited.")
+    logging.warning(
+        "Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited."
+    )
 
 try:
     from .register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP
@@ -126,10 +184,12 @@ try:
     from .register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_MAP
     from .register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_MIN_BAT_MAP
     from .register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_US_MAP
+    from .register_maps.growatt_TLXH_min_holding import REG_HOLDING_TLXH_EXTENDED_MAP
 except ImportError:
     REG_HOLDING_TLXH_MIN_MAP = {}
     REG_HOLDING_TLXH_MIN_BAT_MAP = {}
     REG_HOLDING_TLXH_US_MAP = {}
+    REG_HOLDING_TLXH_EXTENDED_MAP = {}
     logging.warning("Could not import growatt_TLXH_min_holding.")
 
 try:
@@ -142,7 +202,9 @@ except ImportError:
 
 try:
     from .register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_MAP
-    from .register_maps.growatt_storage_spa_holding import REG_HOLDING_SPA_STRAT_CHRG_MAP
+    from .register_maps.growatt_storage_spa_holding import (
+        REG_HOLDING_SPA_STRAT_CHRG_MAP,
+    )
 except ImportError:
     REG_HOLDING_SPA_MAP = {}
     REG_HOLDING_SPA_STRAT_CHRG_MAP = {}
@@ -157,16 +219,9 @@ except ImportError:
     logging.warning("Could not import growatt_storage_sph_holding.")
 
 
-
-
 # --- Constants & Lookups ---
 
-STATE_CODES = {
-    0: "Waiting", 
-    1: "Normal", 
-    3: "Fault",
-    4: "Flash"
-}
+STATE_CODES = {0: "Waiting", 1: "Normal", 3: "Fault", 4: "Flash"}
 
 INVERTER_RUN_STATES = {
     0: "Waiting module",
@@ -244,7 +299,7 @@ class Growatt:
     def __init__(self, client, name, unit, model, log=None):
         """
         Initialize the inverter object.
-        
+
         :param client: Pymodbus Serial Client object (must be connected)
         :param name: Name of the inverter (for logging)
         :param unit: Modbus Unit ID (Slave Address)
@@ -270,120 +325,153 @@ class Growatt:
             self.log.info("Reading Holding Registers for MOD-XH...")
             # Block 1: Basic Settings (0-124)
             # is_input_reg=False to read holding registers (Function Code 03)
-            block1 = self._read_block(0, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False)
+            block1 = self._read_block(
+                0, 100, REG_HOLDING_MOD_TL3_XH_MAP, is_input_reg=False
+            )
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
 
             # Block 2: Advanced Settings (3000-3124)
-            block2 = self._read_block(3000, 100, REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP, is_input_reg=False)
+            block2 = self._read_block(
+                3000,
+                100,
+                REG_HOLDING_MOD_TL3_XH_ADVANCED_SETTINGS_MAP,
+                is_input_reg=False,
+            )
             if block2:
                 data.update(block2)
         # --- Logic for MAX Series ---
         elif self.model == "MAX" and REG_HOLDING_MAX_MAP:
             self.log.info(f"Reading Holding Registers for {self.name} (MAX)...")
-            
+
             # Block 1: 0-99 (Basic settings)
             block1 = self._read_block(0, 100, REG_HOLDING_MAX_MAP, is_input_reg=False)
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
 
             # Block 2: 125-224 (Advanced settings)
-            block2 = self._read_block(125, 100, REG_HOLDING_MAX_MAP_EXTENDED, is_input_reg=False)
+            block2 = self._read_block(
+                125, 100, REG_HOLDING_MAX_MAP_EXTENDED, is_input_reg=False
+            )
             if block2:
                 data.update(block2)
         # --- Logic for TL-XH / MIN Series ---
-        elif (self.model == "TL-XH" or self.model == "TL-XH-MIN") and REG_HOLDING_TLXH_MIN_MAP:
+        elif (
+            self.model == "TL-XH" or self.model == "TL-XH-MIN"
+        ) and REG_HOLDING_TLXH_MIN_MAP:
             self.log.info(f"Reading Holding Registers for {self.name} (TL-XH/MIN)...")
-            
+
             # Block 1: Basic (0-100)
-            block1 = self._read_block(0, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False)
+            block1 = self._read_block(
+                0, 100, REG_HOLDING_TLXH_MIN_MAP, is_input_reg=False
+            )
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
 
             # Block 2: Advanced & Time (3000-3100)
-            block2 = self._read_block(3000, 100, REG_HOLDING_TLXH_MIN_BAT_MAP, is_input_reg=False)
+            block2 = self._read_block(
+                3000, 100, REG_HOLDING_TLXH_MIN_BAT_MAP, is_input_reg=False
+            )
             if block2:
                 data.update(block2)
-            
+
             # Block 3: Extended/US (3125-3225)
-            block3 = self._read_block(3125, 100, REG_HOLDING_TLXH_US_MAP, is_input_reg=False)
+            block3 = self._read_block(
+                3125, 100, REG_HOLDING_TLXH_US_MAP, is_input_reg=False
+            )
             if block3:
                 data.update(block3)
+
+            # Block 4: Dry Contact & Backup Box (3250-3374)
+            if REG_HOLDING_TLXH_EXTENDED_MAP:
+                # Only read if the extended map is defined
+                # read 125 registers starting from 3250
+                block4 = self._read_block(
+                    3250, 125, REG_HOLDING_TLXH_EXTENDED_MAP, is_input_reg=False
+                )
+                if block4:
+                    data.update(block4)
         # --- Logic for MIX (SPH/Hybrid) Series ---
         elif self.model == "MIX" and REG_HOLDING_MIX_MAP:
             self.log.info(f"Reading Holding Registers for {self.name} (MIX)...")
-            
+
             # Block 1: Basic Inverter Settings (0-100)
             block1 = self._read_block(0, 100, REG_HOLDING_MIX_MAP, is_input_reg=False)
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
 
             # Block 2: Storage & Strategy Settings (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_MIX_STORAGE_MAP, is_input_reg=False)
+            block2 = self._read_block(
+                1000, 100, REG_HOLDING_MIX_STORAGE_MAP, is_input_reg=False
+            )
             if block2:
                 data.update(block2)
 
         # --- Logic for SPA (AC-Coupled Storage) ---
         elif self.model == "SPA" and REG_HOLDING_SPA_MAP:
             self.log.info(f"Reading Holding Registers for {self.name} (SPA)...")
-            
+
             # Block 1: Basic Settings (0-100)
             block1 = self._read_block(0, 100, REG_HOLDING_SPA_MAP, is_input_reg=False)
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
 
             # Block 2: Storage Strategy (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_SPA_STRAT_CHRG_MAP, is_input_reg=False)
+            block2 = self._read_block(
+                1000, 100, REG_HOLDING_SPA_STRAT_CHRG_MAP, is_input_reg=False
+            )
             if block2:
                 data.update(block2)
 
         # --- Logic for SPH (Hybrid Storage) ---
         elif self.model == "SPH" and REG_HOLDING_SPH_MAP:
             self.log.info(f"Reading Holding Registers for {self.name} (SPH)...")
-            
+
             # Block 1: Basic Settings (0-100)
             block1 = self._read_block(0, 100, REG_HOLDING_SPH_MAP, is_input_reg=False)
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
 
             # Block 2: Hybrid Strategy (1000-1100)
-            block2 = self._read_block(1000, 100, REG_HOLDING_SPH_H_BAT_MAP, is_input_reg=False)
+            block2 = self._read_block(
+                1000, 100, REG_HOLDING_SPH_H_BAT_MAP, is_input_reg=False
+            )
             if block2:
                 data.update(block2)
         return data
@@ -399,21 +487,31 @@ class Growatt:
         """
         try:
             if is_input_reg:
-                rr = self.client.read_input_registers(address=start_reg, count=length, slave=self.unit)
+                rr = self.client.read_input_registers(
+                    address=start_reg, count=length, slave=self.unit
+                )
             else:
-                rr = self.client.read_holding_registers(address=start_reg, count=length, slave=self.unit)
+                rr = self.client.read_holding_registers(
+                    address=start_reg, count=length, slave=self.unit
+                )
             if isinstance(rr, (ModbusException, ExceptionResponse)):
                 self.offline_counter += 1
                 if self.offline_counter < 5:
-                    self.log.warning(f"{self.name}: Modbus Error reading block {start_reg} (Attempt {self.offline_counter}/5): {rr}")
+                    self.log.warning(
+                        f"{self.name}: Modbus Error reading block {start_reg} (Attempt {self.offline_counter}/5): {rr}"
+                    )
                 elif self.offline_counter == 5:
                     self.is_sleeping = True
-                    self.log.info(f"{self.name}: Inverter seems to be offline (Night Mode). Suppressing further errors.")
+                    self.log.info(
+                        f"{self.name}: Inverter seems to be offline (Night Mode). Suppressing further errors."
+                    )
                 else:
                     self.log.debug(f"{self.name}: Inverter still sleeping... ({rr})")
                 return None
             if self.offline_counter > 0:
-                self.log.info(f"{self.name}: Inverter is back ONLINE after {self.offline_counter} failed cycles.")
+                self.log.info(
+                    f"{self.name}: Inverter is back ONLINE after {self.offline_counter} failed cycles."
+                )
             self.offline_counter = 0
             self.is_sleeping = False
             # Parse raw data using the register map
@@ -429,17 +527,19 @@ class Growatt:
         """
         results = {}
         # Ensure we have valid register data
-        if not hasattr(row, 'registers') or not row.registers:
+        if not hasattr(row, "registers") or not row.registers:
             return results
 
         for name, (offset, length, scale, dtype) in reg_map.items():
             # Safety check: Is the defined register inside the read block?
             # Note: offset in map is relative to base_index
             if offset + length > len(row.registers):
-                self.log.error(f"Register {name} (offset {offset}, length {length}) out of range in read block.")
+                self.log.error(
+                    f"Register {name} (offset {offset}, length {length}) out of range in read block."
+                )
                 continue
             # Extract specific registers for this value
-            regs = row.registers[offset: offset + length]
+            regs = row.registers[offset : offset + length]
             val = 0
             # --- Type Conversion ---
             if dtype == "ascii":
@@ -447,14 +547,18 @@ class Growatt:
                     # Pack as Big-Endian uint16 and decode to ASCII
                     byte_data = b"".join(struct.pack(">H", r) for r in regs)
                     # Remove null bytes and whitespace
-                    val = byte_data.decode("ascii", errors='ignore').strip('\x00').strip()
+                    val = (
+                        byte_data.decode("ascii", errors="ignore").strip("\x00").strip()
+                    )
                 except Exception:
                     val = str(regs)  # Fallback
 
             if dtype == "uint32":
                 val_standard = (regs[0] << 16) + regs[1]
                 # Smart Swap für Energie und Leistungswerte wenn nötig
-                if val_standard > 100000000 or (name.startswith("E_") and val_standard > 1000000):
+                if val_standard > 100000000 or (
+                    name.startswith("E_") and val_standard > 1000000
+                ):
                     val = (regs[1] << 16) + regs[0]
                 else:
                     val = val_standard
@@ -484,8 +588,8 @@ class Growatt:
                 try:
                     # pymodbus returns registers as list of int [HighWord, LowWord]
                     # We pack them into binary data and unpack as float
-                    raw = struct.pack('>HH', regs[0], regs[1])
-                    val = struct.unpack('>f', raw)[0]
+                    raw = struct.pack(">HH", regs[0], regs[1])
+                    val = struct.unpack(">f", raw)[0]
                     val = round(val, 4)  # Optional: rounding
                 except Exception:
                     val = 0.0
@@ -510,10 +614,12 @@ class Growatt:
             raw = int(data["InverterStatus"])
             status = raw & 0xFF
             mode = (raw >> 8) & 0xFF
-            data["StatusVal"] = INVERTER_WEB_PAGE_STATUS.get(status, f"Unknown ({status})")
-            
+            data["StatusVal"] = INVERTER_WEB_PAGE_STATUS.get(
+                status, f"Unknown ({status})"
+            )
+
             if mode == 0 and status == 1:
-                data["StatusMode"] = "Normal (Battery Idle)" 
+                data["StatusMode"] = "Normal (Battery Idle)"
             else:
                 data["StatusMode"] = INVERTER_RUN_STATES.get(mode, f"Unknown ({mode})")
         else:
@@ -529,7 +635,7 @@ class Growatt:
         if "DeratingMode" in data:
             code = int(data["DeratingMode"])
             data["DeratingText"] = DERATING_MODE.get(code, "Unknown")
-            
+
         return data
 
     def update(self):
@@ -545,15 +651,17 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
             if self.model == "TL-XH":
                 # Block 2: Battery Data (3125-3249) -> 125 Registers
                 # Reads Battery/BMS data specifically for XH series
-                block2 = self._read_block(3125, 125, MAP_TLXH_3000_BAT, is_input_reg=True)
+                block2 = self._read_block(
+                    3125, 125, MAP_TLXH_3000_BAT, is_input_reg=True
+                )
                 if block2:
                     data.update(block2)
         # --- Logic for TL3X / Legacy Series ---
@@ -563,9 +671,9 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
             # Block 2: String & PID Data (125-249)
@@ -579,9 +687,9 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
             # Block 2: String & PID Data (125-249)
@@ -599,20 +707,31 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
             if self.model == "TL-XH_MIN":
                 # Block 2: Battery Data (3125-3249) -> 125 Registers
-                block2 = self._read_block(3125, 125, MAP_TLXH_MIN_BAT, is_input_reg=True)
+                block2 = self._read_block(
+                    3125, 125, MAP_TLXH_MIN_BAT, is_input_reg=True
+                )
                 if block2:
                     data.update(block2)
                 # Block 3: Extended Battery Data (3250-3374) -> 125 Registers
-                block3 = self._read_block(3250, 125, MAP_TLXH_MIN_BAT_BDC, is_input_reg=True)
+                block3 = self._read_block(
+                    3250, 125, MAP_TLXH_MIN_BAT_BDC, is_input_reg=True
+                )
                 if block3:
                     data.update(block3)
+                # Block 4: APX BDC Diagnostics (4000-4125)
+                if MAP_TLXH_MIN_APX_BDC:
+                    block4 = self._read_block(
+                        4000, 125, MAP_TLXH_MIN_APX_BDC, is_input_reg=True
+                    )
+                    if block4:
+                        data.update(block4)
         # --- Logic for Storage / Hybrid MIX Series ---
         elif self.model == "MIX" and MAP_MIX:
             # Block 1: Basic Inverter Data (0-124)
@@ -620,9 +739,9 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
             # Block 2: Storage / Hybrid Data (1000-1124)
@@ -636,9 +755,9 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
             # Block 2: Extended Battery Info (1125-1249)
@@ -656,9 +775,9 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
             # Block 2: Storage / Hybrid Data (1000-1124)
@@ -676,9 +795,9 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
         elif self.model == "CHINT" and MAP_CHINT:
@@ -687,9 +806,9 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
         # --- Logic for MOD TL3-XH Series ---
@@ -699,9 +818,9 @@ class Growatt:
             if self.is_sleeping:
                 # inverter is likely in night mode/offline, return minimal data to avoid errors
                 return {
-                        "InverterStatus": 0,  # 0 = Waiting / Offline
-                        "StatusText": "Offline/Sleeping"
-                    }
+                    "InverterStatus": 0,  # 0 = Waiting / Offline
+                    "StatusText": "Offline/Sleeping",
+                }
             if block1:
                 data.update(block1)
             # Block 2: Battery/BDC Data (3125-3249)
@@ -762,7 +881,7 @@ class Growatt:
         Usage Example:
         python growatt2mqtt.py --model TL-XH
         """
-    
+
     def write_command(self, command: str, value: int, lock) -> bool:
         """
         Write a command to the inverter using Modbus.
@@ -778,11 +897,17 @@ class Growatt:
         try:
             with lock:
                 # Modbus Function Code 06 (Write Single Register)
-                response = self.client.write_register(address=register, value=value, slave=self.unit)
+                response = self.client.write_register(
+                    address=register, value=value, slave=self.unit
+                )
             if isinstance(response, (ModbusException, ExceptionResponse)):
-                logging.error(f"Modbus Write Error of CMD {command} (Reg {register}): {response}")
+                logging.error(
+                    f"Modbus Write Error of CMD {command} (Reg {register}): {response}"
+                )
                 return False
-            logging.info(f"{self.name}: CMD '{command}' executed. Register {register} = {value}")
+            logging.info(
+                f"{self.name}: CMD '{command}' executed. Register {register} = {value}"
+            )
             return True
         except Exception as e:
             logging.error(f"Write exception {command}: {e}")
@@ -797,7 +922,9 @@ class Growatt:
         """
         try:
             # Function Code 06 (Write Single Register)
-            response = self.client.write_register(address=register, value=value, slave=self.unit)
+            response = self.client.write_register(
+                address=register, value=value, slave=self.unit
+            )
             if isinstance(response, (ModbusException, ExceptionResponse)):
                 logging.error(f"Error writing {register}: {response}")
                 return False
