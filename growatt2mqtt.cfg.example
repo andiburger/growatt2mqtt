@@ -63,3 +63,9 @@ protocol_version = MOD-XH
 # unit = 1
 # measurement = max_inverter
 # protocol_version = MAX
+
+# Example 5: Inverter using VPP Protocol
+# [inverters.vpp_inverter]
+# unit = 1
+# measurement = vpp_hybrid
+# protocol_version = VPP

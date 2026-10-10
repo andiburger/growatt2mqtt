@@ -155,6 +155,19 @@ except ImportError:
         "Could not import growatt_MOD_TL3_XH_input. MOD TL3-XH functionality might be limited."
     )
 
+# 9. VPP Input Registers
+try:
+    from .register_maps.growatt_vpp_input import (
+        REG_INPUT_VPP_31000_MAP,
+        REG_INPUT_VPP_31100_MAP,
+        REG_INPUT_VPP_31200_MAP,
+    )
+except ImportError:
+    REG_INPUT_VPP_31000_MAP = {}
+    REG_INPUT_VPP_31100_MAP = {}
+    REG_INPUT_VPP_31200_MAP = {}
+    logging.warning("Could not import growatt_vpp_input.")
+
 # Holding Registers
 try:
     from .register_maps.growatt_MOD_TL3_XH_holding import (
@@ -171,6 +184,22 @@ except ImportError:
     logging.warning(
         "Could not import growatt_MOD_TL3_XH_holding. Holding register functionality might be limited."
     )
+
+try:
+    from .register_maps.growatt_vpp_holding import (
+        REG_HOLDING_VPP_30000_MAP,
+        REG_HOLDING_VPP_30100_MAP,
+        REG_HOLDING_VPP_30200_MAP,
+        REG_HOLDING_VPP_30400_MAP,
+        REG_HOLDING_VPP_WRITE_MAP,
+    )
+except ImportError:
+    REG_HOLDING_VPP_30000_MAP = {}
+    REG_HOLDING_VPP_30100_MAP = {}
+    REG_HOLDING_VPP_30200_MAP = {}
+    REG_HOLDING_VPP_30400_MAP = {}
+    REG_HOLDING_VPP_WRITE_MAP = {}
+    logging.warning("Could not import growatt_vpp_holding.")
 
 try:
     from .register_maps.growatt_MAX_holding import REG_HOLDING_MAX_MAP
@@ -474,6 +503,29 @@ class Growatt:
             )
             if block2:
                 data.update(block2)
+                
+        # --- Logic for VPP Protocol ---
+        elif self.model == "VPP" and REG_HOLDING_VPP_30000_MAP:
+            self.log.info(f"Reading Holding Registers for {self.name} (VPP)...")
+            
+            block1 = self._read_block(30000, 100, REG_HOLDING_VPP_30000_MAP, is_input_reg=False)
+            if self.is_sleeping:
+                return {"InverterStatus": 0, "StatusText": "Offline/Sleeping"}
+            if block1:
+                data.update(block1)
+                
+            block2 = self._read_block(30100, 100, REG_HOLDING_VPP_30100_MAP, is_input_reg=False)
+            if block2:
+                data.update(block2)
+                
+            block3 = self._read_block(30200, 100, REG_HOLDING_VPP_30200_MAP, is_input_reg=False)
+            if block3:
+                data.update(block3)
+                
+            block4 = self._read_block(30400, 100, REG_HOLDING_VPP_30400_MAP, is_input_reg=False)
+            if block4:
+                data.update(block4)
+                
         return data
 
     def _read_block(self, start_reg, length, map_ref, is_input_reg=True):
@@ -827,9 +879,24 @@ class Growatt:
             block2 = self._read_block(3125, 125, MAP_MOD_TL3_XH_BAT, is_input_reg=True)
             if block2:
                 data.update(block2)
+        # --- Logic for VPP Protocol ---
+        elif self.model == "VPP" and REG_INPUT_VPP_31000_MAP:
+            block1 = self._read_block(31000, 100, REG_INPUT_VPP_31000_MAP, is_input_reg=True)
+            if self.is_sleeping:
+                return {"InverterStatus": 0, "StatusText": "Offline/Sleeping"}
+            if block1:
+                data.update(block1)
+                
+            block2 = self._read_block(31100, 100, REG_INPUT_VPP_31100_MAP, is_input_reg=True)
+            if block2:
+                data.update(block2)
+                
+            block3 = self._read_block(31200, 100, REG_INPUT_VPP_31200_MAP, is_input_reg=True)
+            if block3:
+                data.update(block3)
         else:
             self.log.warning(f"No valid register map found for model: {self.model}")
-            self.log.warning(self.get_supported_models_help)
+            self.log.warning(self.get_supported_models_help())
 
         # Apply post-processing (Text mapping, bit splitting)
         if data:
@@ -878,6 +945,9 @@ class Growatt:
         10. MOD-XH
             - Description: Growatt MOD TL3-XH 3-Phase Battery Ready Hybrid Inverters.
             - Registers: 3000-3124 (Inverter), 3125-3249 (Battery/BDC).
+        11. VPP
+            - Description: Growatt VPP Communication Protocol.
+            - Registers: 31000-31299 (Input), 30000-30499 (Holding).
         Usage Example:
         python growatt2mqtt.py --model TL-XH
         """
@@ -893,7 +963,18 @@ class Growatt:
         if self.model == "MOD-XH" and command not in REG_HOLDING_MOD_TL3_XH_WRITE_MAP:
             logging.error(f"Unbekannter Befehl für Inverter {self.name}: {command}")
             return False
-        register = REG_HOLDING_MOD_TL3_XH_WRITE_MAP[command]
+        elif self.model == "VPP" and command not in REG_HOLDING_VPP_WRITE_MAP:
+            logging.error(f"Unbekannter Befehl für Inverter {self.name}: {command}")
+            return False
+        elif self.model not in ["MOD-XH", "VPP"]:
+            logging.error(f"Writing commands is not yet supported for model {self.model}")
+            return False
+            
+        if self.model == "VPP":
+            register = REG_HOLDING_VPP_WRITE_MAP[command]
+        else:
+            register = REG_HOLDING_MOD_TL3_XH_WRITE_MAP[command]
+            
         try:
             with lock:
                 # Modbus Function Code 06 (Write Single Register)
