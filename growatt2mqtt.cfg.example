@@ -9,9 +9,20 @@ offline_interval = 60
 error_interval = 60
 
 [serial]
+# Choose connection type: 'serial' (default) or 'tcp' (for ShineWifi-X / Modbus TCP)
+type = serial
+
+# --- Settings for type = serial ---
 # Use 'ls /dev/serial/by-id/*' to find the stable path for your RS485 adapter
 port = /dev/ttyUSB0
 baudrate = 9600
+
+# --- Settings for type = tcp ---
+# IP Address of your ShineWifi-X stick or Modbus TCP gateway
+host = 192.168.1.100
+tcp_port = 502
+# Framer: 'rtu' is typical for ShineWifi sticks, 'socket' for standard Modbus TCP
+framer = rtu
 
 [general]
 # Set to DEBUG to see raw register values in the console
@@ -52,3 +63,9 @@ protocol_version = MOD-XH
 # unit = 1
 # measurement = max_inverter
 # protocol_version = MAX
+
+# Example 5: Inverter using VPP Protocol
+# [inverters.vpp_inverter]
+# unit = 1
+# measurement = vpp_hybrid
+# protocol_version = VPP
