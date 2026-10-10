@@ -69,35 +69,18 @@ class GrowattService:
         self.log.info(f"Configuration loaded from {self.config_path}")
 
     def _setup_modbus(self):
-        """Initializes the Modbus connection (Serial or TCP)."""
-        modbus_type = self.settings.get('serial', 'type', fallback='serial')
-
-        if modbus_type.lower() == 'tcp':
-            from pymodbus.client import ModbusTcpClient
-            from pymodbus.transaction import ModbusRtuFramer, ModbusSocketFramer
-            
-            host = self.settings.get('serial', 'host', fallback='192.168.1.100')
-            tcp_port = self.settings.getint('serial', 'tcp_port', fallback=502)
-            framer = self.settings.get('serial', 'framer', fallback='rtu').lower()
-            
-            self.log.info(f"Connecting to Modbus TCP on {host}:{tcp_port} (Framer: {framer})...")
-            if framer == 'rtu':
-                self.client_modbus = ModbusTcpClient(host=host, port=tcp_port, framer=ModbusRtuFramer, timeout=3)
-            else:
-                self.client_modbus = ModbusTcpClient(host=host, port=tcp_port, framer=ModbusSocketFramer, timeout=3)
-        else:
-            port = self.settings.get('serial', 'port', fallback='/dev/ttyUSB0')
-            baud = self.settings.getint('serial', 'baudrate', fallback=9600)
-            self.log.info(f"Connecting to Modbus RTU on {port} ({baud} baud)...")
-            self.client_modbus = ModbusSerialClient(
-                port=port,
-                baudrate=baud,
-                stopbits=1,
-                parity='N',
-                bytesize=8,
-                timeout=3
-            )
-
+        """Initializes the RS485 Modbus connection."""
+        port = self.settings.get('serial', 'port', fallback='/dev/ttyUSB0')
+        baud = self.settings.getint('serial', 'baudrate', fallback=9600)
+        self.log.info(f"Connecting to Modbus RTU on {port} ({baud} baud)...")
+        self.client_modbus = ModbusSerialClient(
+            port=port,
+            baudrate=baud,
+            stopbits=1,
+            parity='N',
+            bytesize=8,
+            timeout=3
+        )
         if not self.client_modbus.connect():
             self.log.error("Failed to connect to Modbus interface!")
             # We don't exit hard here, allowing the loop to retry later
