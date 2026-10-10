@@ -80,4 +80,3 @@ REG_HOLDING_VPP_WRITE_MAP = {
     "ExportLimitationEnable": 30200,
     "ExportLimitationPowerRate": 30201,
 }
-

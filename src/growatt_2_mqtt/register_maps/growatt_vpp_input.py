@@ -55,4 +55,3 @@ REG_INPUT_VPP_31200_MAP = {
     "BatteryCapacityRatingFCC": (19, 2, 1, "uint32"),
     "BatteryEnvironmentalTemperature": (23, 1, 10, "int"), # 0.1C
 }
-
